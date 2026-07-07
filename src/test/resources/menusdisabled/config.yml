@@ -139,7 +139,7 @@ message-format: auto
 # rankup/prestige statistics and leaderboards (/rankup top and
 # %rankup_top_<n>_name% style placeholders)
 database:
-  enabled: true
+  enabled: false
   # sqlite (default, stored in plugins/ArkonasRanks/data.db) or mysql
   type: sqlite
   host: localhost
@@ -157,4 +157,4 @@ database:
 # Rankup3-parity behaviour. Set to false for full parity. Menu appearance is
 # configured in menus.yml.
 menus:
-  enabled: true
+  enabled: false

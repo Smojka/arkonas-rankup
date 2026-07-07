@@ -97,6 +97,13 @@ public class PebbleMessageBuilder implements MessageBuilder {
   }
 
   @Override
+  public net.kyori.adventure.text.Component toComponent(Player player) {
+    // same pipeline as send(): raw processor (no colour stage) then the
+    // ComponentRenderer handles legacy/hex/MiniMessage in one pass
+    return plugin.getComponentRenderer().render(rawProcessor(player).process(message));
+  }
+
+  @Override
   public String toString() {
     return processor(null).process(message);
   }

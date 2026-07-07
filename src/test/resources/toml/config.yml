@@ -157,4 +157,4 @@ database:
 # Rankup3-parity behaviour. Set to false for full parity. Menu appearance is
 # configured in menus.yml.
 menus:
-  enabled: true
+  enabled: false

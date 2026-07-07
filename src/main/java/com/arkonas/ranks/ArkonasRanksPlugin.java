@@ -122,6 +122,8 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   private com.arkonas.ranks.effects.EffectsListener effectsListener;
   @Getter
   private com.arkonas.ranks.data.StatsService stats;
+  @Getter
+  private com.arkonas.ranks.menu.MenuModule menuModule;
   protected AutoRankup autoRankup = new AutoRankup(this);
   private String errorMessage;
   private PermissionManager permissionManager = new VaultPermissionManager(this);
@@ -169,8 +171,25 @@ public class ArkonasRanksPlugin extends JavaPlugin {
           () -> config.getBoolean("notify-update") ? "enabled" : "disabled"));
     }
 
+    // The advanced menu module wraps the player-facing commands with pop-up
+    // inventory screens. It is fully additive: when menus.enabled is absent or
+    // false the plugin behaves exactly like the Rankup3-parity core.
+    boolean menus = config.getBoolean("menus.enabled");
+    if (menus) {
+      menuModule = new com.arkonas.ranks.menu.MenuModule(this);
+      if (config.getBoolean("ranks-gui")
+          || "gui".equalsIgnoreCase(config.getString("confirmation-type", ""))) {
+        getLogger().info("menus.enabled is true: ranks-gui and confirmation-type are ignored "
+            + "while the menu module is active (the menus are the confirmation screen).");
+      }
+    }
+
     if (config.getBoolean("ranks")) {
-      if (config.getBoolean("ranks-gui")) {
+      if (menus) {
+        // menus override ranks-gui; the console still gets the parity chat list
+        getCommand("ranks").setExecutor(
+            new com.arkonas.ranks.menu.commands.MenuRanksCommand(this, menuModule, new RanksCommand(this)));
+      } else if (config.getBoolean("ranks-gui")) {
         RanksGuiListener listener = new RanksGuiListener();
         getCommand("ranks").setExecutor(new RanksGuiCommand(this, listener));
         getServer().getPluginManager().registerEvents(listener, this);
@@ -179,16 +198,25 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       }
     }
     if (config.getBoolean("prestige")) {
-      getCommand("prestige").setExecutor(new PrestigeCommand(this));
+      PrestigeCommand prestigeParity = new PrestigeCommand(this);
+      getCommand("prestige").setExecutor(menus
+          ? new com.arkonas.ranks.menu.commands.MenuPrestigeCommand(this, menuModule, prestigeParity)
+          : prestigeParity);
       if (config.getBoolean("prestiges")) {
-        getCommand("prestiges").setExecutor(new PrestigesCommand(this));
+        PrestigesCommand prestigesParity = new PrestigesCommand(this);
+        getCommand("prestiges").setExecutor(menus
+            ? new com.arkonas.ranks.menu.commands.MenuPrestigesCommand(this, menuModule, prestigesParity)
+            : prestigesParity);
       }
     }
     if (config.getBoolean("max-rankup.enabled")) {
       getCommand("maxrankup").setExecutor(new MaxRankupCommand(this));
     }
 
-    getCommand("rankup").setExecutor(new RankupCommand(this));
+    RankupCommand rankupParity = new RankupCommand(this);
+    getCommand("rankup").setExecutor(menus
+        ? new com.arkonas.ranks.menu.commands.MenuRankupCommand(this, menuModule, rankupParity)
+        : rankupParity);
     getCommand("arkonasranks").setExecutor(new InfoCommand(this, notifier));
     effectsListener = new com.arkonas.ranks.effects.EffectsListener(this);
     getServer().getPluginManager().registerEvents(effectsListener, this);
@@ -206,6 +234,10 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       }
     }
     getServer().getPluginManager().registerEvents(new GuiListener(this), this);
+    if (menuModule != null) {
+      // the parity GuiListener stays registered for when menus are disabled
+      getServer().getPluginManager().registerEvents(menuModule.getListener(), this);
+    }
     getServer().getPluginManager().registerEvents(
         new JoinUpdateNotifier(notifier, () -> getConfig().getBoolean("notify-update"), "rankup.notify"), this);
 
@@ -217,6 +249,9 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   @Override
   public void onDisable() {
     closeInventories();
+    if (menuModule != null) {
+      menuModule.closeAll();
+    }
     if (placeholders != null) {
       placeholders.unregister();
     }
@@ -269,6 +304,10 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     componentRenderer = com.arkonas.ranks.text.ComponentRenderer.of(config.getString("message-format", "auto"));
     if (effectsListener != null) {
       effectsListener.reload();
+    }
+    if (menuModule != null) {
+      // close open menus and re-read menus.yml (the ladder may have changed)
+      menuModule.reload();
     }
 
     helper = new RankupHelper(this);

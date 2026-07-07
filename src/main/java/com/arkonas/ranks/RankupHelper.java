@@ -123,6 +123,25 @@ public class RankupHelper {
     }
   }
 
+  /**
+   * Milliseconds remaining on the rankup/prestige cooldown for a player, or 0 if
+   * they are not on cooldown. Read-only: does not mutate or clear the cooldown
+   * map (used by the menu module's live countdown item). Returns 0 when the
+   * {@code cooldown} setting is disabled.
+   *
+   * @param uuid the player's unique id
+   * @return non-negative milliseconds left, 0 if none
+   */
+  public long getCooldownRemainingMillis(java.util.UUID uuid) {
+    Long start = cooldowns.get(uuid);
+    if (start == null) {
+      return 0;
+    }
+    long cooldownMillis = config.getInt("cooldown") * 1000L;
+    long left = cooldownMillis - (System.currentTimeMillis() - start);
+    return Math.max(0, left);
+  }
+
   public void rankup(Player player) {
     if (!checkRankup(player)) {
       return;

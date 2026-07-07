@@ -1,0 +1,175 @@
+R00:
+  rank: 'A'
+  next: 'B'
+  requirements:
+    - 'money 100'
+R01:
+  rank: 'B'
+  next: 'C'
+  requirements:
+    - 'money 100'
+R02:
+  rank: 'C'
+  next: 'D'
+  requirements:
+    - 'money 100'
+R03:
+  rank: 'D'
+  next: 'E'
+  requirements:
+    - 'money 100'
+R04:
+  rank: 'E'
+  next: 'F'
+  requirements:
+    - 'money 100'
+R05:
+  rank: 'F'
+  next: 'G'
+  requirements:
+    - 'money 100'
+R06:
+  rank: 'G'
+  next: 'H'
+  requirements:
+    - 'money 100'
+R07:
+  rank: 'H'
+  next: 'I'
+  requirements:
+    - 'money 100'
+R08:
+  rank: 'I'
+  next: 'J'
+  requirements:
+    - 'money 100'
+R09:
+  rank: 'J'
+  next: 'K'
+  requirements:
+    - 'money 100'
+R10:
+  rank: 'K'
+  next: 'L'
+  requirements:
+    - 'money 100'
+R11:
+  rank: 'L'
+  next: 'M'
+  requirements:
+    - 'money 100'
+R12:
+  rank: 'M'
+  next: 'N'
+  requirements:
+    - 'money 100'
+R13:
+  rank: 'N'
+  next: 'O'
+  requirements:
+    - 'money 100'
+R14:
+  rank: 'O'
+  next: 'P'
+  requirements:
+    - 'money 100'
+R15:
+  rank: 'P'
+  next: 'Q'
+  requirements:
+    - 'money 100'
+R16:
+  rank: 'Q'
+  next: 'R'
+  requirements:
+    - 'money 100'
+R17:
+  rank: 'R'
+  next: 'S'
+  requirements:
+    - 'money 100'
+R18:
+  rank: 'S'
+  next: 'T'
+  requirements:
+    - 'money 100'
+R19:
+  rank: 'T'
+  next: 'U'
+  requirements:
+    - 'money 100'
+R20:
+  rank: 'U'
+  next: 'V'
+  requirements:
+    - 'money 100'
+R21:
+  rank: 'V'
+  next: 'W'
+  requirements:
+    - 'money 100'
+R22:
+  rank: 'W'
+  next: 'X'
+  requirements:
+    - 'money 100'
+R23:
+  rank: 'X'
+  next: 'Y'
+  requirements:
+    - 'money 100'
+R24:
+  rank: 'Y'
+  next: 'Z'
+  requirements:
+    - 'money 100'
+R25:
+  rank: 'Z'
+  next: 'AA'
+  requirements:
+    - 'money 100'
+R26:
+  rank: 'AA'
+  next: 'AB'
+  requirements:
+    - 'money 100'
+R27:
+  rank: 'AB'
+  next: 'AC'
+  requirements:
+    - 'money 100'
+R28:
+  rank: 'AC'
+  next: 'AD'
+  requirements:
+    - 'money 100'
+R29:
+  rank: 'AD'
+  next: 'AE'
+  requirements:
+    - 'money 100'
+R30:
+  rank: 'AE'
+  next: 'AF'
+  requirements:
+    - 'money 100'
+R31:
+  rank: 'AF'
+  next: 'AG'
+  requirements:
+    - 'money 100'
+R32:
+  rank: 'AG'
+  next: 'AH'
+  requirements:
+    - 'money 100'
+R33:
+  rank: 'AH'
+  next: 'AI'
+  requirements:
+    - 'money 100'
+R34:
+  rank: 'AI'
+  next: 'AJ'
+  requirements:
+    - 'money 100'

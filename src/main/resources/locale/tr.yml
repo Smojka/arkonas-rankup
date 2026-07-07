@@ -102,3 +102,92 @@ prestige:
 
 not-high-enough: "&cBu rütbede prestij yapamazsın!"
 not-in-ladder: "&cÜzgünüz, bulunduğun grup(lar) için rütbe atlama bulunamadı. Rütbeleri listelemek için /ranks kullan."
+
+# Gelişmiş menü modülü (menus.yml). İsim/lore &kodları, &#RRGGBB hex ve
+# MiniMessage etiketlerini destekler. Menüye özel {bar} {percent} {seconds}
+# {page} {pages} {position} {name} {count} {player} {rank} {next} {rankups}
+# tokenleri Pebble'dan önce ikame edilir; {{ ... }} normal Pebble'dır.
+menu:
+  common:
+    back: "&7« Geri"
+    home: "&b☰ Menü"
+    close: "&cKapat"
+    prev-page: "&a« Önceki"
+    next-page: "&aSonraki »"
+    page: "&7Sayfa {page}/{pages}"
+  hub:
+    title: "ArkonasRanks"
+    head-name: "&b{player}"
+    head-lore: |-
+      &7Mevcut rütbe: &f{rank}
+      &7Sonraki rütbe: &f{next}
+      &7Rütbe atlama: &a{rankups}
+    disabled: "&8Şu anda kullanılamıyor"
+    buttons:
+      path:
+        name: "&b&lRütbe Yolu"
+        lore: "&7Tüm merdiveni gör"
+      rankup:
+        name: "&a&lRütbe Atla"
+        lore: "&7Bir sonraki rütbene yüksel"
+      prestige:
+        name: "&d&lPrestij"
+        lore: "&7En üste ulaşınca prestij yap"
+      leaderboard:
+        name: "&6&lLider Tablosu"
+        lore: "&7En çok rütbe & prestij"
+  path:
+    title: "Rütbe Yolu"
+    current: "&d{{rank.rank}} &7» &f{{next.rank}}"
+    complete: "&a{{rank.rank}} &7(tamamlandı)"
+    locked: "&c{{rank.rank}} &7» &f{{next.rank}}"
+    click-rankup: "&eRütbe atlamak için tıkla"
+  rankup:
+    title: "Rütbe » {{next.rank}}"
+    target: "&a&l{{next.rank}}"
+    confirm: "&a&lOnayla"
+    confirm-lore: "&7Rütbe: &f{{next.rank}}"
+    cancel: "&c&lİptal"
+    cooldown: "&eLütfen &c{seconds}sn &ebekle"
+    blocked: "&cŞu anda atlanacak rütbe yok"
+    requirement-money: "&7Ücret: &6{{ value | money }}"
+    requirement-simple: "&7Gerekli: &f{{ value | simple }}"
+    requirement-progress: "&b{bar} &7%{percent}"
+    requirement-met: "&a✔ Gereksinim tamam"
+    requirement-unmet: "&c✖ Henüz tamamlanmadı"
+    requirement-names:
+      money: "Para"
+      xp-level: "XP Seviyesi"
+      playtime-minutes: "Oyun Süresi"
+      block-break: "Kırılan Bloklar"
+      mob-kills: "Yaratık Öldürme"
+      player-kills: "Oyuncu Öldürme"
+      item: "Eşyalar"
+      craft-item: "Üretilen Eşyalar"
+      advancement: "Başarım"
+      group: "Grup"
+      permission: "İzin"
+      placeholder: "Placeholder"
+      world: "Dünya"
+  prestige:
+    title: "Prestij » {{next.rank}}"
+    target: "&d&l{{next.rank}}"
+    confirm: "&a&lOnayla"
+    confirm-lore: "&7Prestij: &f{{next.rank}}"
+    cancel: "&c&lİptal"
+    cooldown: "&eLütfen &c{seconds}sn &ebekle"
+    blocked: "&cHenüz prestij yapamazsın"
+  prestige-list:
+    title: "Prestijler"
+    current: "&d{{next.rank}}"
+    complete: "&a{{rank.rank}} &7(tamam)"
+    locked: "&c{{next.rank}}"
+    click: "&ePrestij yapmak için tıkla"
+  leaderboard:
+    title: "Lider Tablosu"
+    entry: "&e#{position} &f{name} &7- &b{count}"
+    toggle-rankups: "&a&lRütbeler &7(prestij için tıkla)"
+    toggle-prestiges: "&d&lPrestijler &7(rütbe için tıkla)"
+    empty: "&7Henüz kayıt yok"
+    loading: "&7Yükleniyor..."
+    disabled: "&cİstatistikler kapalı"

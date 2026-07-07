@@ -72,7 +72,7 @@ confirmation-type: 'gui'
 
 # how long, in seconds, people have to wait between a successful /rankup or /prestige
 # set to 0 to disable.
-cooldown: 1
+cooldown: 3
 
 # if enabled, players can run /maxrankup to rankup as many times as possible,
 # before they fail the requirements for the next rank.

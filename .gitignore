@@ -4,3 +4,4 @@ build/
 *.iml
 spigot/
 .DS_Store
+testserver/

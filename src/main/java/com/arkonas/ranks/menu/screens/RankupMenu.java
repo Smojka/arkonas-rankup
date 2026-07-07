@@ -1,0 +1,68 @@
+package com.arkonas.ranks.menu.screens;
+
+import java.util.List;
+import org.bukkit.entity.Player;
+import com.arkonas.ranks.menu.AbstractMenu;
+import com.arkonas.ranks.menu.MenuModule;
+import com.arkonas.ranks.ranks.Rank;
+import com.arkonas.ranks.ranks.RankElement;
+import com.arkonas.ranks.requirements.Requirement;
+
+/**
+ * The rankup confirmation screen. Reads the player's position in the rankup
+ * ladder and delegates the confirm action to {@code RankupHelper#rankup} so the
+ * requirement/cooldown re-check happens exactly as in the parity GUI.
+ */
+public class RankupMenu extends ConfirmScreen {
+
+  public RankupMenu(MenuModule module, Player player, AbstractMenu parent) {
+    super(module, player, parent, module.getConfig().rows("rankup", 5));
+  }
+
+  private RankElement<Rank> element() {
+    return plugin.getRankups() == null ? null : plugin.getRankups().getByPlayer(player);
+  }
+
+  @Override
+  protected String menuKey() {
+    return "rankup";
+  }
+
+  @Override
+  protected Rank currentRank() {
+    RankElement<Rank> element = element();
+    return element == null ? null : element.getRank();
+  }
+
+  @Override
+  protected Rank nextRank() {
+    RankElement<Rank> element = element();
+    return element != null && element.hasNext() ? element.getNext().getRank() : null;
+  }
+
+  @Override
+  protected Iterable<Requirement> requirements() {
+    Rank current = currentRank();
+    if (current == null) {
+      return List.of();
+    }
+    return current.getRequirements().getRequirements(player);
+  }
+
+  @Override
+  protected boolean requirementsMet() {
+    Rank current = currentRank();
+    return current != null && current.hasRequirements(player);
+  }
+
+  @Override
+  protected boolean canAdvance() {
+    RankElement<Rank> element = element();
+    return element != null && element.hasNext();
+  }
+
+  @Override
+  protected void performConfirm() {
+    plugin.getHelper().rankup(player);
+  }
+}

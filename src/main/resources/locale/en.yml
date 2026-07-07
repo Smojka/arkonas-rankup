@@ -117,3 +117,92 @@ prestige:
 
 not-high-enough: "&cYou cannot prestige at your rank!"
 not-in-ladder: "&cSorry, but we could not find any rankups for the group(s) you are in. Use /ranks to list the rankups."
+
+# Advanced menu module (menus.yml). Names/lore support &codes, &#RRGGBB hex and
+# MiniMessage tags. Menu-only tokens {bar} {percent} {seconds} {page} {pages}
+# {position} {name} {count} {player} {rank} {next} {rankups} are substituted
+# before Pebble runs; {{ ... }} is normal Pebble.
+menu:
+  common:
+    back: "&7« Back"
+    home: "&b☰ Menu"
+    close: "&cClose"
+    prev-page: "&a« Previous"
+    next-page: "&aNext »"
+    page: "&7Page {page}/{pages}"
+  hub:
+    title: "ArkonasRanks"
+    head-name: "&b{player}"
+    head-lore: |-
+      &7Current rank: &f{rank}
+      &7Next rank: &f{next}
+      &7Rankups: &a{rankups}
+    disabled: "&8Currently unavailable"
+    buttons:
+      path:
+        name: "&b&lRank Path"
+        lore: "&7See the whole ladder"
+      rankup:
+        name: "&a&lRankup"
+        lore: "&7Advance to your next rank"
+      prestige:
+        name: "&d&lPrestige"
+        lore: "&7Prestige once you reach the top"
+      leaderboard:
+        name: "&6&lLeaderboard"
+        lore: "&7Top rankups & prestiges"
+  path:
+    title: "Rank Path"
+    current: "&d{{rank.rank}} &7» &f{{next.rank}}"
+    complete: "&a{{rank.rank}} &7(completed)"
+    locked: "&c{{rank.rank}} &7» &f{{next.rank}}"
+    click-rankup: "&eClick to rankup"
+  rankup:
+    title: "Rankup » {{next.rank}}"
+    target: "&a&l{{next.rank}}"
+    confirm: "&a&lConfirm"
+    confirm-lore: "&7Rankup to &f{{next.rank}}"
+    cancel: "&c&lCancel"
+    cooldown: "&ePlease wait &c{seconds}s"
+    blocked: "&cNothing to rankup to right now"
+    requirement-money: "&7Cost: &6{{ value | money }}"
+    requirement-simple: "&7Requires: &f{{ value | simple }}"
+    requirement-progress: "&b{bar} &7{percent}%"
+    requirement-met: "&a✔ Requirement met"
+    requirement-unmet: "&c✖ Not met yet"
+    requirement-names:
+      money: "Money"
+      xp-level: "XP Levels"
+      playtime-minutes: "Playtime"
+      block-break: "Blocks Mined"
+      mob-kills: "Mob Kills"
+      player-kills: "Player Kills"
+      item: "Items"
+      craft-item: "Crafted Items"
+      advancement: "Advancement"
+      group: "Group"
+      permission: "Permission"
+      placeholder: "Placeholder"
+      world: "World"
+  prestige:
+    title: "Prestige » {{next.rank}}"
+    target: "&d&l{{next.rank}}"
+    confirm: "&a&lConfirm"
+    confirm-lore: "&7Prestige to &f{{next.rank}}"
+    cancel: "&c&lCancel"
+    cooldown: "&ePlease wait &c{seconds}s"
+    blocked: "&cYou cannot prestige yet"
+  prestige-list:
+    title: "Prestiges"
+    current: "&d{{next.rank}}"
+    complete: "&a{{rank.rank}} &7(done)"
+    locked: "&c{{next.rank}}"
+    click: "&eClick to prestige"
+  leaderboard:
+    title: "Leaderboard"
+    entry: "&e#{position} &f{name} &7- &b{count}"
+    toggle-rankups: "&a&lRankups &7(click for prestiges)"
+    toggle-prestiges: "&d&lPrestiges &7(click for rankups)"
+    empty: "&7No entries yet"
+    loading: "&7Loading..."
+    disabled: "&cStatistics are disabled"
