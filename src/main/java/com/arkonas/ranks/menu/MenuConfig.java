@@ -2,6 +2,8 @@ package com.arkonas.ranks.menu;
 
 import java.io.File;
 import java.util.List;
+import java.util.Locale;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import com.arkonas.ranks.ArkonasRanksPlugin;
@@ -70,6 +72,23 @@ public class MenuConfig {
   public List<Integer> slots(String menu, String key) {
     ConfigurationSection section = menu(menu);
     return section == null ? List.of() : section.getIntegerList(key);
+  }
+
+  /**
+   * Reads a per-menu {@link Material} (e.g. {@code menus.rankup.info-material}),
+   * falling back to {@code def} when absent or unparseable.
+   */
+  public Material material(String menu, String key, Material def) {
+    ConfigurationSection section = menu(menu);
+    String name = section == null ? null : section.getString(key);
+    if (name == null || name.isBlank()) {
+      return def;
+    }
+    try {
+      return Material.valueOf(name.trim().toUpperCase(Locale.ROOT));
+    } catch (IllegalArgumentException ignored) {
+      return def;
+    }
   }
 
   private ConfigurationSection section(String path) {

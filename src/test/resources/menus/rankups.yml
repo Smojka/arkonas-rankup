@@ -1,11 +1,14 @@
 Aexample:
   rank: 'A'
   next: 'B'
+  rankup:
+    rewards: '&8• custom reward'
   requirements:
     - 'money 100'
 Bexample:
   rank: 'B'
   next: 'C'
+  display-name: 'Beta'
   requirements:
     - 'money 100'
 Cexample:

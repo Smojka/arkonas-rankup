@@ -6,6 +6,7 @@ import java.util.Map;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
@@ -119,6 +120,7 @@ public abstract class ConfirmScreen extends AbstractMenu {
   }
 
   private void placeRequirements() {
+    setItem(13, infoPanel());
     fillEntries.clear();
     List<Requirement> list = new ArrayList<>();
     for (Requirement requirement : requirements()) {
@@ -146,7 +148,7 @@ public abstract class ConfirmScreen extends AbstractMenu {
   }
 
   private void placeConfirm() {
-    setItem(13, targetItem());
+    setItem(13, infoPanel());
 
     confirmBase = icon(Material.LIME_CONCRETE,
         text.component(player, text.raw(menuKey() + ".confirm", "&a&lConfirm"),
@@ -170,6 +172,7 @@ public abstract class ConfirmScreen extends AbstractMenu {
   }
 
   private void placeCooldown(long cooldownMillis) {
+    setItem(13, infoPanel());
     cooldownSlot = centerSlot();
     long seconds = (long) Math.ceil(cooldownMillis / 1000.0);
     shownCooldownSeconds = seconds;
@@ -183,10 +186,56 @@ public abstract class ConfirmScreen extends AbstractMenu {
     return icon(Material.CLOCK, name, List.of(), false);
   }
 
-  private ItemStack targetItem() {
-    Component name = text.component(player, text.raw(menuKey() + ".target", "&a{{next.rank}}"),
-        currentRank(), nextRank());
-    return icon(Material.EXPERIENCE_BOTTLE, name, List.of(), true);
+  /**
+   * The rank-info panel shown at slot 13 in the UNMET, COOLDOWN and READY states
+   * (never BLOCKED). Names the rank being advanced to and lists the rewards
+   * gained there. Built once per populate/refresh — never in {@link #onTick} — so
+   * the animation tick never runs Pebble and the dirty-slot contract holds.
+   */
+  private ItemStack infoPanel() {
+    Rank current = currentRank();
+    Rank next = nextRank();
+    Material material =
+        module.getConfig().material(menuKey(), "info-material", Material.WRITABLE_BOOK);
+    String nameDefault =
+        "prestige".equals(menuKey())
+            ? "&d&l{{ next.name | default(next.rank) }}"
+            : "&b&l{{ next.name | default(next.rank) }}";
+    Component name =
+        text.component(player, text.raw(menuKey() + ".info-name", nameDefault), current, next);
+    String rewards = rewardsBlock(current);
+    String loreRaw = text.raw(menuKey() + ".info-lore",
+        "&7From &f{{rank.rank}} &7to &f{{next.rank}}\n&r\n&e&lRewards:\n{rewards}");
+    List<Component> lore =
+        text.lore(player, MenuText.sub(loreRaw, Map.of("rewards", rewards)), current, next);
+    return icon(material, name, lore, true);
+  }
+
+  /**
+   * Resolves the rewards block: a per-rank {@code rankup.rewards} /
+   * {@code prestige.rewards} (or bare {@code rewards}) override on the current
+   * rank wins; otherwise the locale {@code rewards-default}.
+   */
+  private String rewardsBlock(Rank current) {
+    ConfigurationSection section = current == null ? null : current.getSection();
+    if (section != null) {
+      String override = firstNonBlank(
+          section.getString(menuKey() + ".rewards"),
+          section.getString("rewards"));
+      if (override != null) {
+        return override;
+      }
+    }
+    return text.raw(menuKey() + ".rewards-default", "&8• &7Unlocks the &f{{next.rank}} &7rank");
+  }
+
+  private static String firstNonBlank(String... values) {
+    for (String value : values) {
+      if (value != null && !value.isBlank()) {
+        return value;
+      }
+    }
+    return null;
   }
 
   // --- animation ------------------------------------------------------------
@@ -257,13 +306,22 @@ public abstract class ConfirmScreen extends AbstractMenu {
     List<Integer> slots = new ArrayList<>();
     if (count <= 7) {
       int start = 1 + Math.max(0, (7 - count) / 2);
-      for (int i = 0; i < count; i++) {
-        slots.add(midRow * 9 + start + i);
+      int c = start;
+      while (slots.size() < count) {
+        int slot = midRow * 9 + c;
+        if (slot != 13) { // reserved for the rank-info panel
+          slots.add(slot);
+        }
+        c++;
       }
     } else {
       for (int r = 1; r <= rows - 2 && slots.size() < count; r++) {
         for (int c = 1; c <= 7 && slots.size() < count; c++) {
-          slots.add(r * 9 + c);
+          int slot = r * 9 + c;
+          if (slot == 13) {
+            continue; // reserved for the rank-info panel
+          }
+          slots.add(slot);
         }
       }
     }

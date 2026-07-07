@@ -145,6 +145,9 @@ menu:
   rankup:
     title: "Rütbe » {{next.rank}}"
     target: "&a&l{{next.rank}}"
+    info-name: "&b&l{{ next.name | default(next.rank) }}"
+    info-lore: "&7{{rank.rank}} &7’den &f{{next.rank}} &7’ye\n&r\n&e&lÖdüller:\n{rewards}"
+    rewards-default: "&8• &7{{next.rank}} &7rütbesini açar"
     confirm: "&a&lOnayla"
     confirm-lore: "&7Rütbe: &f{{next.rank}}"
     cancel: "&c&lİptal"
@@ -172,6 +175,9 @@ menu:
   prestige:
     title: "Prestij » {{next.rank}}"
     target: "&d&l{{next.rank}}"
+    info-name: "&d&l{{ next.name | default(next.rank) }}"
+    info-lore: "&7{{rank.rank}} &7’den &f{{next.rank}} &7’ye\n&r\n&e&lÖdüller:\n{rewards}"
+    rewards-default: "&8• &7{{next.rank}} &7rütbesini açar"
     confirm: "&a&lOnayla"
     confirm-lore: "&7Prestij: &f{{next.rank}}"
     cancel: "&c&lİptal"

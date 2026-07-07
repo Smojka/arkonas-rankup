@@ -160,6 +160,9 @@ menu:
   rankup:
     title: "Rankup » {{next.rank}}"
     target: "&a&l{{next.rank}}"
+    info-name: "&b&l{{ next.name | default(next.rank) }}"
+    info-lore: "&7From &f{{rank.rank}} &7to &f{{next.rank}}\n&r\n&e&lRewards:\n{rewards}"
+    rewards-default: "&8• &7Unlocks the &f{{next.rank}} &7rank"
     confirm: "&a&lConfirm"
     confirm-lore: "&7Rankup to &f{{next.rank}}"
     cancel: "&c&lCancel"
@@ -187,6 +190,9 @@ menu:
   prestige:
     title: "Prestige » {{next.rank}}"
     target: "&d&l{{next.rank}}"
+    info-name: "&d&l{{ next.name | default(next.rank) }}"
+    info-lore: "&7From &f{{rank.rank}} &7to &f{{next.rank}}\n&r\n&e&lRewards:\n{rewards}"
+    rewards-default: "&8• &7Unlocks the &f{{next.rank}} &7rank"
     confirm: "&a&lConfirm"
     confirm-lore: "&7Prestige to &f{{next.rank}}"
     cancel: "&c&lCancel"

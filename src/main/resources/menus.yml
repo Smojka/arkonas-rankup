@@ -86,8 +86,12 @@ menus:
     rows: 6
   rankup:
     rows: 5
+    # material of the rank-info panel shown at slot 13 (name + rewards)
+    info-material: WRITABLE_BOOK
   prestige:
     rows: 5
+    # material of the rank-info panel shown at slot 13 (name + rewards)
+    info-material: WRITABLE_BOOK
   prestige-list:
     rows: 6
   leaderboard:
