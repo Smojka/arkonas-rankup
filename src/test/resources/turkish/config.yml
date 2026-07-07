@@ -135,3 +135,6 @@ shorten:
 # legacy - only & codes and &#RRGGBB, exactly like Rankup3
 # minimessage - only MiniMessage tags
 message-format: auto
+
+menus:
+  enabled: true

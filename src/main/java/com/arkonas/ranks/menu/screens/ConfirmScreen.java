@@ -38,7 +38,8 @@ public abstract class ConfirmScreen extends AbstractMenu {
   private ItemStack confirmBase;
   private ItemStack confirmGlow;
   private int lastPulsePhase = -1;
-  private long lastShownSecond = -1;
+  @Getter
+  private long shownCooldownSeconds = -1;
 
   protected ConfirmScreen(MenuModule module, Player player, AbstractMenu parent, int rows) {
     super(module, player, parent, rows);
@@ -72,7 +73,7 @@ public abstract class ConfirmScreen extends AbstractMenu {
     Rank current = currentRank();
     Rank next = nextRank();
     lastPulsePhase = -1;
-    lastShownSecond = -1;
+    shownCooldownSeconds = -1;
 
     if (current == null || next == null || !canAdvance()) {
       state = State.BLOCKED;
@@ -139,7 +140,7 @@ public abstract class ConfirmScreen extends AbstractMenu {
   private void placeCooldown(long cooldownMillis) {
     cooldownSlot = centerSlot();
     long seconds = (long) Math.ceil(cooldownMillis / 1000.0);
-    lastShownSecond = seconds;
+    shownCooldownSeconds = seconds;
     setItem(cooldownSlot, cooldownItem(seconds));
   }
 
@@ -173,9 +174,9 @@ public abstract class ConfirmScreen extends AbstractMenu {
         return;
       }
       long seconds = (long) Math.ceil(cooldown / 1000.0);
-      if (seconds != lastShownSecond) {
+      if (seconds != shownCooldownSeconds) {
         setItem(cooldownSlot, cooldownItem(seconds));
-        lastShownSecond = seconds;
+        shownCooldownSeconds = seconds;
       }
     }
   }
