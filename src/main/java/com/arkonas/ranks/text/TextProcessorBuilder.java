@@ -1,0 +1,39 @@
+package com.arkonas.ranks.text;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
+import com.arkonas.ranks.placeholders.Placeholders;
+import com.arkonas.ranks.text.pebble.PebbleTextProcessor;
+
+public class TextProcessorBuilder {
+
+  private final List<TextProcessor> processors = new ArrayList<>();
+
+  public TextProcessorBuilder colour() {
+    processors.add(new ColourTextProcessor());
+    return this;
+  }
+
+  public TextProcessorBuilder pebble(Logger logger, Map<String, Object> context, Placeholders options) {
+    processors.add(new PebbleTextProcessor(logger, context, options));
+    return this;
+  }
+
+  public TextProcessorBuilder papi(@Nullable Player player) {
+    processors.add(new PlaceholderApiTextProcessor(player));
+    return this;
+  }
+
+  public TextProcessorBuilder legacy(Map<String, Object> context, Placeholders options) {
+    processors.add(new LegacyTextProcessor(context, options));
+    return this;
+  }
+
+  public TextProcessor create() {
+    return new ChainedTextProcessor(processors.toArray(new TextProcessor[0]));
+  }
+}

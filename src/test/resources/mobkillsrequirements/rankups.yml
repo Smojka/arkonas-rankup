@@ -1,0 +1,6 @@
+a:
+  rank: 'A'
+  next: 'B'
+  requirements:
+    - 'mob-kills snow_golem 3' # entity name
+    - 'mob-kills mooshroom 3' # entity enum value

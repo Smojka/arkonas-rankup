@@ -1,0 +1,46 @@
+package com.arkonas.ranks.commands;
+
+import lombok.RequiredArgsConstructor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import com.arkonas.ranks.ArkonasRanksPlugin;
+import com.arkonas.ranks.RankupHelper;
+import com.arkonas.ranks.ranks.Rank;
+import com.arkonas.ranks.ranks.RankElement;
+
+@RequiredArgsConstructor
+public class MaxRankupCommand implements CommandExecutor {
+  private final ArkonasRanksPlugin plugin;
+
+  @Override
+  public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    if (!(sender instanceof Player)) {
+      return false;
+    }
+    RankupHelper helper = plugin.getHelper();
+
+    Player player = (Player) sender;
+
+    if (!helper.checkRankup(player)) {
+      return true;
+    }
+
+    do {
+      RankElement<Rank> rank = plugin.getRankups().getByPlayer(player);
+      rank.getRank().applyRequirements(player);
+
+      helper.doRankup(player, rank);
+
+      // if the individual-messages setting is disabled, only send the "well done you ranked up"
+      // messages if they can't rank up any more.
+      if (plugin.getConfig().getBoolean("max-rankup.individual-messages")
+          || !helper.checkRankup(player, false)) {
+        helper.sendRankupMessages(player, rank);
+      }
+    } while (helper.checkRankup(player, false));
+
+    return true;
+  }
+}
