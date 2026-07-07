@@ -344,6 +344,7 @@ public class ArkonasRanksPlugin extends JavaPlugin {
 
   private void saveLocales() {
     saveLocale("en");
+    saveLocale("tr");
     saveLocale("pt_br");
     saveLocale("ru");
     saveLocale("zh_cn");

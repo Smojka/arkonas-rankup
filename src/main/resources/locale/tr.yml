@@ -1,0 +1,104 @@
+# bu bölümdeki mesajlar rankups.yml içinde her rütbe için ayrı ayrı özelleştirilebilir.
+rankup:
+  requirements-not-met: "&cRütbe atlamak için {{rank.requirement('money').total | money}} paraya ihtiyacın var."
+  no-rankup: "&eEn yüksek rütbedesin."
+  # bir mesajı gizlemek için boş string yap, örn: success-public: ""
+  success-public: "&a{{player}} &eyeni rütbesine yükseldi: &d{{next.rank}}"
+  success-private: "&aYeni rütbene yükseldin: &d{{next.rank}}"
+  # yazılı onay için kullanılır
+  confirmation: |-
+    &e&a{{next.rank}} &erütbesine yükselmek istediğine emin misin?
+    &eOnaylamak için tekrar &c/rankup &eyaz.
+  must-prestige: "&cDaha fazla /rankup için önce prestij yapmalısın!"
+
+  gui:
+    rows: 1
+    title: "Rütbe atla: {{next.rank}}"
+    rankup:
+      material: EMERALD_BLOCK
+      # index boşlukla ayrılarak birden çok grupta gösterilebilir
+      # örnek: 0-3 9-12 18-21
+      # aralık yerine tek bir sayı da kullanabilirsin.
+      index: 0-3
+      name: '&a&lOnayla'
+      # lore isteğe bağlıdır
+      lore: '&6Yeni rütbe: &b{{next.rank}}'
+    cancel:
+      material: REDSTONE_BLOCK
+      index: 5-8
+      name: '&c&lİptal'
+    fill:
+      name: ' '
+      # 1.8-1.12 kullanıyorsan MATERIAL:data yazabilirsin, örnek STAINED_GLASS_PANE:8
+      # bu rankup ve cancel blokları için de geçerlidir
+      material: BLACK_STAINED_GLASS_PANE
+
+  ranksgui:
+    title: "Rütbeler"
+    rows: 3
+    offset: 10
+    width: 7
+    complete:
+      material: GREEN_STAINED_GLASS_PANE
+      name: "&aRütbe &7{{next.rank}} &a(tamamlandı)"
+    current:
+      material: ORANGE_STAINED_GLASS_PANE
+      name: "&dRütbe atla: &7{{next.rank}}"
+    incomplete:
+      material: RED_STAINED_GLASS_PANE
+      name: "&cRütbe &7{{next.rank}} &c(rütbe atlaman gerekli)"
+    fill:
+      material: BLACK_STAINED_GLASS_PANE
+      name: ' '
+
+  # bu mesajları rankups.yml içinde her rütbe için ayrı özelleştirmen önerilir.
+  list:
+    complete: "&7{{rank.rank}} &8\xbb &7{{next.rank}}"
+    current: "&c{{rank.rank}} &e\xbb &c{{next.rank}}"
+    incomplete: "&r{{rank.rank}} &e\xbb &r{{next.rank}}"
+    # boş string header/footer'ı devre dışı bırakır
+    header: ""
+    footer: ""
+  # bekleme süresi dolmadan rankup denenince gönderilir
+  cooldown:
+    singular: "&cTekrar rütbe atlamak için {{seconds_left}} saniye daha beklemelisin."
+    plural: "&cTekrar rütbe atlamak için {{seconds_left}} saniye daha beklemelisin."
+# prestij mesajları da özelleştirilebilir
+prestige:
+  requirements-not-met: "&cPrestij yapmak için {{rank.requirement('money').total | money}} paraya ihtiyacın var."
+  no-prestige: "&eEn yüksek prestijdesin."
+
+  success-public: "&a{{player}} &eprestij yaptı: &d{{next.rank}}"
+  success-private: "&aPrestij yaptın: &d{{next.rank}}"
+
+  confirmation: |-
+    &e&a{{next.rank}} &eprestijine geçmek istediğine emin misin?
+    &eOnaylamak için tekrar &c/prestige &eyaz.
+
+  gui:
+    title: "Prestij: {{next.rank}}"
+    rankup:
+      material: GOLD_BLOCK
+      index: 0-3
+      name: '&a&lOnayla'
+      lore: '&6Prestij: &b{{next.rank}}'
+    cancel:
+      material: REDSTONE_BLOCK
+      index: 5-8
+      name: '&c&lİptal'
+    fill:
+      name: ' '
+      material: BLACK_STAINED_GLASS_PANE
+
+  list:
+    complete: "&7{{rank.rank}} &8\xbb &7{{next.rank}}"
+    current: "&c{{rank.rank}} &e\xbb &c{{next.rank}}"
+    incomplete: "&r{{rank.rank}} &e\xbb &r{{next.rank}}"
+    header: ""
+    footer: ""
+  cooldown:
+    singular: "&cTekrar prestij yapmak için {{seconds_left}} saniye beklemelisin."
+    plural: "&cTekrar prestij yapmak için {{seconds_left}} saniye daha beklemelisin."
+
+not-high-enough: "&cBu rütbede prestij yapamazsın!"
+not-in-ladder: "&cÜzgünüz, bulunduğun grup(lar) için rütbe atlama bulunamadı. Rütbeleri listelemek için /ranks kullan."
