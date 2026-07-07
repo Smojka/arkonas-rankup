@@ -120,6 +120,8 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       com.arkonas.ranks.text.ComponentRenderer.of("auto");
   @Getter
   private com.arkonas.ranks.effects.EffectsListener effectsListener;
+  @Getter
+  private com.arkonas.ranks.data.StatsService stats;
   protected AutoRankup autoRankup = new AutoRankup(this);
   private String errorMessage;
   private PermissionManager permissionManager = new VaultPermissionManager(this);
@@ -190,6 +192,19 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     getCommand("arkonasranks").setExecutor(new InfoCommand(this, notifier));
     effectsListener = new com.arkonas.ranks.effects.EffectsListener(this);
     getServer().getPluginManager().registerEvents(effectsListener, this);
+    if (config.getBoolean("database.enabled", true)) {
+      try {
+        stats = new com.arkonas.ranks.data.StatsService(getLogger(), getDataFolder(),
+            config.getConfigurationSection("database"));
+        getServer().getPluginManager().registerEvents(
+            new com.arkonas.ranks.data.StatsListener(stats), this);
+      } catch (Exception e) {
+        getLogger().log(java.util.logging.Level.SEVERE,
+            "Could not initialise the statistics database; /rankup top and"
+                + " leaderboard placeholders are disabled", e);
+        stats = null;
+      }
+    }
     getServer().getPluginManager().registerEvents(new GuiListener(this), this);
     getServer().getPluginManager().registerEvents(
         new JoinUpdateNotifier(notifier, () -> getConfig().getBoolean("notify-update"), "rankup.notify"), this);
@@ -204,6 +219,10 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     closeInventories();
     if (placeholders != null) {
       placeholders.unregister();
+    }
+    if (stats != null) {
+      stats.close();
+      stats = null;
     }
   }
 

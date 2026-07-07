@@ -36,6 +36,11 @@ public class RankupCommand implements CommandExecutor {
       return true;
     }
 
+    if (args.length > 0 && args[0].equalsIgnoreCase("top")) {
+      handleTop(sender, Arrays.copyOfRange(args, 1, args.length));
+      return true;
+    }
+
     // check if player
     if (!(sender instanceof Player)) {
       return false;
@@ -86,6 +91,31 @@ public class RankupCommand implements CommandExecutor {
         throw new IllegalArgumentException("Invalid confirmation type " + confirmationType);
     }
     return true;
+  }
+
+  private void handleTop(CommandSender sender, String[] args) {
+    if (!sender.hasPermission("rankup.top")) {
+      return;
+    }
+    com.arkonas.ranks.data.StatsService stats = plugin.getStats();
+    if (stats == null) {
+      sender.sendMessage(ChatColor.RED + "Statistics are disabled on this server.");
+      return;
+    }
+    boolean prestiges = args.length > 0 && args[0].toLowerCase().startsWith("prestige");
+    stats.top(prestiges, 10, entries -> Bukkit.getScheduler().runTask(plugin, () -> {
+      sender.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD
+          + (prestiges ? "Top Prestiges" : "Top Rankups"));
+      if (entries.isEmpty()) {
+        sender.sendMessage(ChatColor.GRAY + "No entries yet.");
+        return;
+      }
+      int position = 1;
+      for (com.arkonas.ranks.data.LeaderboardEntry entry : entries) {
+        sender.sendMessage(ChatColor.YELLOW + "" + position++ + ". " + ChatColor.WHITE
+            + entry.name() + ChatColor.GRAY + " - " + ChatColor.AQUA + entry.count());
+      }
+    }));
   }
 
   private void handleNoConfirm(CommandSender sender, String label, String[] args) {

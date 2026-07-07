@@ -41,6 +41,11 @@ public class RankupExpansion implements Expansion {
             prestige = prestigeElement == null ? null : prestigeElement.getRank();
         }
 
+        String top = topPlaceholder(player, params);
+        if (top != null) {
+            return top;
+        }
+
         if (params.startsWith("requirement_")) {
             String[] parts = params.split("_", 3);
             return getPlaceholderRequirement(player, rank,
@@ -164,6 +169,49 @@ public class RankupExpansion implements Expansion {
 
     private void requirePrestiging(Prestiges prestiges, String params) {
         Objects.requireNonNull(prestiges, "Using %rankup_" + params + "% prestige placeholder but prestiging is disabled.");
+    }
+
+    /**
+     * Leaderboard/stat placeholders backed by the async stats cache:
+     * top_[n]_name, top_[n]_count, prestige_top_[n]_name, prestige_top_[n]_count,
+     * player_rankups, player_prestiges. Returns null when params is not one of them.
+     */
+    private String topPlaceholder(Player player, String params) {
+        com.arkonas.ranks.data.StatsService stats = plugin.getStats();
+        boolean prestigeTop = params.startsWith("prestige_top_");
+        if (params.startsWith("top_") || prestigeTop) {
+            if (stats == null) {
+                return "";
+            }
+            String[] parts = params.split("_");
+            // top_<n>_<field> or prestige_top_<n>_<field>
+            int indexOffset = prestigeTop ? 2 : 1;
+            if (parts.length < indexOffset + 2) {
+                return null;
+            }
+            int position;
+            try {
+                position = Integer.parseInt(parts[indexOffset]);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+            java.util.List<com.arkonas.ranks.data.LeaderboardEntry> entries =
+                stats.cachedTop(prestigeTop);
+            if (position < 1 || position > entries.size()) {
+                return "";
+            }
+            com.arkonas.ranks.data.LeaderboardEntry entry = entries.get(position - 1);
+            return parts[indexOffset + 1].equals("count")
+                ? String.valueOf(entry.count()) : entry.name();
+        }
+        if (params.equals("player_rankups") || params.equals("player_prestiges")) {
+            if (stats == null) {
+                return "";
+            }
+            int[] counts = stats.cachedCounts(player.getUniqueId());
+            return String.valueOf(params.equals("player_rankups") ? counts[0] : counts[1]);
+        }
+        return null;
     }
 
     private String getPlaceholderRequirement(Player player, Rank rank, String requirementName, String params) {

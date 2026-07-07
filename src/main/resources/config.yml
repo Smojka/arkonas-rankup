@@ -135,3 +135,16 @@ shorten:
 # legacy - only & codes and &#RRGGBB, exactly like Rankup3
 # minimessage - only MiniMessage tags
 message-format: auto
+
+# rankup/prestige statistics and leaderboards (/rankup top and
+# %rankup_top_<n>_name% style placeholders)
+database:
+  enabled: true
+  # sqlite (default, stored in plugins/ArkonasRanks/data.db) or mysql
+  type: sqlite
+  host: localhost
+  port: 3306
+  database: arkonasranks
+  username: root
+  password: ''
+  pool-size: 4
