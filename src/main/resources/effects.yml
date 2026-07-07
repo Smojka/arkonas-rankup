@@ -1,0 +1,70 @@
+# ArkonasRanks celebration effects.
+# Played when a player ranks up or prestiges (also via /maxrankup, autorankup and forced rankups).
+#
+# Per-rank overrides: add a "celebration:" section to a rank in rankups.yml
+# (or a prestige in prestiges.yml) with the same keys as the rankup:/prestige:
+# sections below. Any key present in the override replaces the global value.
+#
+# Message placeholders: %player%, %rank% (old rank), %next% (new rank).
+# Messages support legacy & codes, &#RRGGBB hex and MiniMessage tags.
+enabled: true
+
+rankup:
+  sound:
+    name: entity.player.levelup
+    volume: 1.0
+    pitch: 1.0
+  particle:
+    type: TOTEM_OF_UNDYING
+    count: 40
+    offset: 0.5
+  firework:
+    enabled: false
+    power: 1
+    # firework star colors, hex RRGGBB
+    colors: [ '00FF88', '00CCFF' ]
+    type: BALL_LARGE
+  title:
+    title: '&6&lRANKUP!'
+    subtitle: '&e%rank% &7» &a%next%'
+    fade-in: 10
+    stay: 60
+    fade-out: 20
+  actionbar: ''
+  bossbar:
+    enabled: false
+    text: '&a%player% is now %next%!'
+    color: GREEN
+    overlay: PROGRESS
+    seconds: 5
+  # who additionally sees the title/bossbar celebration: none | world | server
+  broadcast-mode: none
+
+prestige:
+  sound:
+    name: ui.toast.challenge_complete
+    volume: 1.0
+    pitch: 1.0
+  particle:
+    type: FIREWORK
+    count: 60
+    offset: 0.7
+  firework:
+    enabled: true
+    power: 1
+    colors: [ 'FFD700', 'FF4500' ]
+    type: STAR
+  title:
+    title: '&d&lPRESTIGE!'
+    subtitle: '&e%player% &7reached &d%next%'
+    fade-in: 10
+    stay: 80
+    fade-out: 20
+  actionbar: ''
+  bossbar:
+    enabled: false
+    text: '&d%player% prestiged to %next%!'
+    color: PURPLE
+    overlay: PROGRESS
+    seconds: 6
+  broadcast-mode: none

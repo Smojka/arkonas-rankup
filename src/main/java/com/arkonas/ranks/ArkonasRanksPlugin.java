@@ -118,6 +118,8 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   @Getter
   private com.arkonas.ranks.text.ComponentRenderer componentRenderer =
       com.arkonas.ranks.text.ComponentRenderer.of("auto");
+  @Getter
+  private com.arkonas.ranks.effects.EffectsListener effectsListener;
   protected AutoRankup autoRankup = new AutoRankup(this);
   private String errorMessage;
   private PermissionManager permissionManager = new VaultPermissionManager(this);
@@ -186,6 +188,8 @@ public class ArkonasRanksPlugin extends JavaPlugin {
 
     getCommand("rankup").setExecutor(new RankupCommand(this));
     getCommand("arkonasranks").setExecutor(new InfoCommand(this, notifier));
+    effectsListener = new com.arkonas.ranks.effects.EffectsListener(this);
+    getServer().getPluginManager().registerEvents(effectsListener, this);
     getServer().getPluginManager().registerEvents(new GuiListener(this), this);
     getServer().getPluginManager().registerEvents(
         new JoinUpdateNotifier(notifier, () -> getConfig().getBoolean("notify-update"), "rankup.notify"), this);
@@ -244,6 +248,9 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     }
 
     componentRenderer = com.arkonas.ranks.text.ComponentRenderer.of(config.getString("message-format", "auto"));
+    if (effectsListener != null) {
+      effectsListener.reload();
+    }
 
     helper = new RankupHelper(this);
   }
