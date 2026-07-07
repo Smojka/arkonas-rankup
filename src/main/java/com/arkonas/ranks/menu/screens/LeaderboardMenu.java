@@ -25,7 +25,8 @@ public class LeaderboardMenu extends AbstractMenu {
 
   private static final int[] PODIUM = {13, 21, 23};
   private static final int[] ENTRY_SLOTS = {28, 29, 30, 31, 32, 33, 34};
-  private static final int TOGGLE_SLOT = 49;
+  // row 4 centre; slot 49 (the plan's suggestion) is taken by the Home nav button
+  private static final int TOGGLE_SLOT = 40;
 
   @Getter
   private final boolean prestiges;
