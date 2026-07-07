@@ -129,3 +129,9 @@ shorten:
 - 'Q'
 - 'Qu'
 - 'S'
+
+# how messages are rendered:
+# auto - legacy & codes, &#RRGGBB hex and MiniMessage tags can be mixed (default)
+# legacy - only & codes and &#RRGGBB, exactly like Rankup3
+# minimessage - only MiniMessage tags
+message-format: auto

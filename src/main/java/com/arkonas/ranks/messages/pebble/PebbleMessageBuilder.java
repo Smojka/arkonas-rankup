@@ -85,7 +85,7 @@ public class PebbleMessageBuilder implements MessageBuilder {
     if (sender instanceof Player) {
       player = (Player) sender;
     }
-    sender.sendMessage(processor(player).process(message));
+    sender.sendMessage(plugin.getComponentRenderer().render(rawProcessor(player).process(message)));
   }
 
   @Override
@@ -114,6 +114,18 @@ public class PebbleMessageBuilder implements MessageBuilder {
         .pebble(plugin.getLogger(), context, plugin.getPlaceholders())
         .papi(player)
         .colour()
+        .create();
+  }
+
+  // same pipeline without the colour stage; the ComponentRenderer handles
+  // legacy codes, hex and MiniMessage in one pass when sending
+  private TextProcessor rawProcessor(Player player) {
+    Map<String, Object> context = getContext(player);
+    return new TextProcessorBuilder()
+        .legacy(context, plugin.getPlaceholders())
+        .papi(player)
+        .pebble(plugin.getLogger(), context, plugin.getPlaceholders())
+        .papi(player)
         .create();
   }
 

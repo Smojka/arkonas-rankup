@@ -16,7 +16,7 @@ public class CommandInfoTest extends RankupTest {
     player.addAttachment(plugin, "rankup.admin", true);
     plugin.getCommand("rankup3").execute(player, "pru", new String[] {"placeholders"});
 
-    player.assertSaid("--- Rankup placeholders ---");
+    player.assertSaid("--- ArkonasRanks placeholders ---");
   }
 
   @Test

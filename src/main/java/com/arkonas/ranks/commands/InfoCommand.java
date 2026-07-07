@@ -37,7 +37,7 @@ public class InfoCommand implements TabExecutor {
       if (args[0].equalsIgnoreCase("reload") && sender.hasPermission("rankup.reload")) {
         plugin.reload(false);
         if (!plugin.error(sender)) {
-          sender.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "Rankup " + ChatColor.YELLOW + "Reloaded configuration files.");
+          sender.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "ArkonasRanks " + ChatColor.YELLOW + "Reloaded configuration files.");
         }
         return true;
       } else if (args[0].equalsIgnoreCase("forcerankup") && sender.hasPermission("rankup.force")) {
@@ -157,7 +157,7 @@ public class InfoCommand implements TabExecutor {
                 + ChatColor.GREEN + " to " + ChatColor.GOLD + prevRank.getRank());
         return true;
       } else if (args[0].equalsIgnoreCase("placeholders") && sender.hasPermission("rankup.admin")) {
-        sender.sendMessage("--- Rankup placeholders ---");
+        sender.sendMessage("--- ArkonasRanks placeholders ---");
         if (args.length > 1 && args[1].equalsIgnoreCase("status")) {
           for (Rank rank : plugin.getRankups().getTree()) {
             String placeholder = "status_" + rank.getRank();

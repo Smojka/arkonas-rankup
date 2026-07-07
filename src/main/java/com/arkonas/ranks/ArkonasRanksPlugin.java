@@ -115,6 +115,9 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   private Placeholders placeholders;
   @Getter
   private RankupHelper helper;
+  @Getter
+  private com.arkonas.ranks.text.ComponentRenderer componentRenderer =
+      com.arkonas.ranks.text.ComponentRenderer.of("auto");
   protected AutoRankup autoRankup = new AutoRankup(this);
   private String errorMessage;
   private PermissionManager permissionManager = new VaultPermissionManager(this);
@@ -235,12 +238,12 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       getLogger().severe("You are using an outdated config!");
       getLogger().severe("This means that some things might not work!");
       getLogger().severe("To update, please rename ALL your config files (or the folder they are in),");
-      getLogger().severe("and run /pru reload to generate a new config file.");
+      getLogger().severe("and run /aru reload to generate a new config file.");
       getLogger().severe("If that does not work, restart your server.");
       getLogger().severe("You may then copy in your config values manually from the old config.");
-      getLogger().severe("Check the changelog on the Rankup spigot page to see the changes.");
-      getLogger().severe("https://www.spigotmc.org/resources/rankup.76964/updates");
     }
+
+    componentRenderer = com.arkonas.ranks.text.ComponentRenderer.of(config.getString("message-format", "auto"));
 
     helper = new RankupHelper(this);
   }

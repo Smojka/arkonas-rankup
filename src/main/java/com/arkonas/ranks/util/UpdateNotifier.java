@@ -29,8 +29,7 @@ public class UpdateNotifier {
       @Override
       public void onOutdatedVersion(String currentVersion, String latestVersion) {
         send(sender, join, ChatColor.YELLOW + "A new version is available: " + ChatColor.GOLD + latestVersion
-            + ChatColor.YELLOW + ". You are on: " + ChatColor.GOLD + currentVersion
-            + ChatColor.GOLD + "\nhttps://www.spigotmc.org/resources/" + VersionChecker.RESOURCE_ID + "/");
+            + ChatColor.YELLOW + ". You are on: " + ChatColor.GOLD + currentVersion);
       }
 
       @Override
