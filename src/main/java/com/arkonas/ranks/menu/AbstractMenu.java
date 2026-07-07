@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -246,14 +245,6 @@ public abstract class AbstractMenu implements InventoryHolder {
   protected ItemStack navItem(Material material, String rawName, String colour) {
     Component name = text.component(player, "<" + colour + ">" + rawName);
     return icon(material, name, List.of(), false);
-  }
-
-  protected Component line(String rawName) {
-    return text.component(player, rawName);
-  }
-
-  protected Component plain(String content, String colour) {
-    return Component.text(content).decoration(TextDecoration.ITALIC, false);
   }
 
   protected void defer(Runnable runnable) {

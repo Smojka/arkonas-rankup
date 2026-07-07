@@ -26,6 +26,17 @@ public class RequirementItemRenderer {
   }
 
   public ItemStack render(Player player, Requirement requirement) {
+    return render(player, requirement, -1);
+  }
+
+  /**
+   * Renders the requirement icon. When {@code barSegments >= 0} the progress bar
+   * is drawn with that many filled segments instead of the actual progress; this
+   * is used by the fill animation, which pre-builds one item per reveal step so
+   * the ticker never runs Pebble. All other lore (cost, met/unmet) reflects the
+   * real state.
+   */
+  public ItemStack render(Player player, Requirement requirement, int barSegments) {
     MenuTheme theme = module.getTheme();
     MenuText text = module.getText();
     Material material = module.getIcons().forRequirement(requirement.getName());
@@ -41,7 +52,8 @@ public class RequirementItemRenderer {
       double remaining = requirement.getRemaining(player);
       double progress = Math.max(0, total - remaining);
       double fraction = total <= 0 ? 1 : progress / total;
-      String bar = theme.progressBar().bar(fraction);
+      int filled = barSegments >= 0 ? barSegments : theme.progressBar().filled(fraction);
+      String bar = theme.progressBar().partialBar(filled);
       int percent = ProgressBar.percent(fraction);
 
       boolean money = isMoney(requirement.getName());
@@ -62,6 +74,17 @@ public class RequirementItemRenderer {
         : text.raw("rankup.requirement-unmet", "&c✖ Not met yet")));
 
     return MenuItems.build(material, name, lore, met);
+  }
+
+  /** The number of filled bar segments for a requirement's actual progress. */
+  public int targetSegments(Player player, Requirement requirement) {
+    if (!(requirement instanceof ProgressiveRequirement)) {
+      return 0;
+    }
+    double total = requirement.getTotal(player);
+    double remaining = requirement.getRemaining(player);
+    double fraction = total <= 0 ? 1 : Math.max(0, total - remaining) / total;
+    return module.getTheme().progressBar().filled(fraction);
   }
 
   public static boolean isMoney(String name) {

@@ -41,6 +41,22 @@ public abstract class ConfirmScreen extends AbstractMenu {
   @Getter
   private long shownCooldownSeconds = -1;
 
+  // pre-built fill-reveal variants for the UNMET state (no Pebble in the tick)
+  private final List<FillEntry> fillEntries = new ArrayList<>();
+
+  private static final class FillEntry {
+    final int slot;
+    final ItemStack[] variants;
+    final int target;
+    int shown = -1;
+
+    FillEntry(int slot, ItemStack[] variants, int target) {
+      this.slot = slot;
+      this.variants = variants;
+      this.target = target;
+    }
+  }
+
   protected ConfirmScreen(MenuModule module, Player player, AbstractMenu parent, int rows) {
     super(module, player, parent, rows);
   }
@@ -103,13 +119,29 @@ public abstract class ConfirmScreen extends AbstractMenu {
   }
 
   private void placeRequirements() {
+    fillEntries.clear();
     List<Requirement> list = new ArrayList<>();
     for (Requirement requirement : requirements()) {
       list.add(requirement);
     }
     List<Integer> slots = requirementSlots(list.size());
+    var renderer = module.getRequirementRenderer();
+    boolean fill = module.progressFill();
     for (int i = 0; i < list.size() && i < slots.size(); i++) {
-      setItem(slots.get(i), module.getRequirementRenderer().render(player, list.get(i)));
+      int slot = slots.get(i);
+      Requirement requirement = list.get(i);
+      int target = renderer.targetSegments(player, requirement);
+      if (fill && target > 0) {
+        // pre-build one item per reveal step so the tick never runs Pebble
+        ItemStack[] variants = new ItemStack[target + 1];
+        for (int k = 0; k <= target; k++) {
+          variants[k] = renderer.render(player, requirement, k);
+        }
+        fillEntries.add(new FillEntry(slot, variants, target));
+        setItem(slot, variants[0]);
+      } else {
+        setItem(slot, renderer.render(player, requirement));
+      }
     }
   }
 
@@ -161,7 +193,16 @@ public abstract class ConfirmScreen extends AbstractMenu {
 
   @Override
   protected void onTick(long frame) {
-    if (state == State.READY && module.confirmPulse() && confirmSlot >= 0) {
+    if (state == State.UNMET && module.progressFill() && !fillEntries.isEmpty()) {
+      long step = frame - getOpenedFrame();
+      for (FillEntry entry : fillEntries) {
+        int k = (int) Math.max(0, Math.min(step, entry.target));
+        if (k != entry.shown) {
+          setItem(entry.slot, entry.variants[k]);
+          entry.shown = k;
+        }
+      }
+    } else if (state == State.READY && module.confirmPulse() && confirmSlot >= 0) {
       int phase = (int) ((frame / 5) % 2);
       if (phase != lastPulsePhase) {
         setItem(confirmSlot, phase == 0 ? confirmBase : confirmGlow);
