@@ -53,7 +53,12 @@ public class RequirementItemRenderer {
       double progress = Math.max(0, total - remaining);
       double fraction = total <= 0 ? 1 : progress / total;
       int filled = barSegments >= 0 ? barSegments : theme.progressBar().filled(fraction);
-      String bar = theme.progressBar().partialBar(filled);
+      // animated frames advance whole cells, so drive smooth/gradient off filled/length there;
+      // the static (settled) frame uses the true fraction for sub-cell smoothing.
+      double barFraction = barSegments >= 0
+          ? (double) filled / theme.progressBar().length()
+          : fraction;
+      String bar = theme.renderBar(filled, barFraction);
       int percent = ProgressBar.percent(fraction);
 
       boolean money = isMoney(requirement.getName());

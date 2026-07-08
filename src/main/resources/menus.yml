@@ -41,6 +41,14 @@ theme:
     filled-char: '▰'
     empty-char: '▱'
     length: 10
+    # bar style: classic (filled/empty chars), smooth (eighth-block sub-cells),
+    # or gradient (hex gradient over the filled cells).
+    # smooth/gradient need message-format auto or minimessage (config.yml).
+    style: classic
+    gradient:
+      from: '#3DDC84'
+      to: '#00E5FF'
+      empty: '#8A8F98'
   # UI sounds (the rankup/prestige success sound lives in effects.yml, not here)
   sounds:
     open: block.note_block.pling

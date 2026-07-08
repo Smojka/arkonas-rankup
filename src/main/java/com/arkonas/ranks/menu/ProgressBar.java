@@ -98,7 +98,17 @@ public final class ProgressBar {
    * @return a MiniMessage string
    */
   public String gradientBar(double fraction, String fromHex, String toHex, String emptyHex) {
-    int filled = filled(fraction);
+    return gradientPartial(filled(fraction), fromHex, toHex, emptyHex);
+  }
+
+  /**
+   * Segment-count analogue of {@link #gradientBar}: wraps exactly {@code filledSegments} filled
+   * cells in a MiniMessage {@code <gradient>} with a dim empty tail. Used by the fill animation,
+   * which pre-builds one variant per reveal step, so the gradient string for each step is computed
+   * off the tick.
+   */
+  public String gradientPartial(int filledSegments, String fromHex, String toHex, String emptyHex) {
+    int filled = Math.max(0, Math.min(length, filledSegments));
     StringBuilder filledPart = new StringBuilder();
     StringBuilder emptyPart = new StringBuilder();
     for (int i = 0; i < length; i++) {
@@ -117,6 +127,25 @@ public final class ProgressBar {
       out.append('<').append(hex(emptyHex)).append('>').append(emptyPart);
     }
     return out.toString();
+  }
+
+  /**
+   * Renders a bar in the configured style. {@code classic} (default) uses the filled/empty chars,
+   * {@code gradient} draws a hex gradient over the filled cells, {@code smooth} uses eighth-block
+   * sub-cell glyphs. The segment count drives the discrete styles (so it lines up with the fill
+   * animation) while {@code fraction} drives the smooth style.
+   */
+  public String styled(String style, int filledSegments, double fraction, String fromHex,
+      String toHex, String emptyHex) {
+    String normalized = style == null ? "" : style.toLowerCase(java.util.Locale.ROOT);
+    switch (normalized) {
+      case "gradient":
+        return gradientPartial(filledSegments, fromHex, toHex, emptyHex);
+      case "smooth":
+        return smoothBar(fraction);
+      default:
+        return partialBar(filledSegments);
+    }
   }
 
   private static String hex(String colour) {

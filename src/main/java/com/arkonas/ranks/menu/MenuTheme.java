@@ -39,6 +39,10 @@ public class MenuTheme {
   private final int lights;
 
   private final ProgressBar progressBar;
+  private final String progressStyle;
+  private final String progressFrom;
+  private final String progressTo;
+  private final String progressEmpty;
   private final ConfigurationSection sounds;
 
   public MenuTheme(ArkonasRanksPlugin plugin, MenuConfig config) {
@@ -76,11 +80,31 @@ public class MenuTheme {
     int barLength = progress == null ? 10 : progress.getInt("length", 10);
     this.progressBar = new ProgressBar(filled, empty, barLength);
 
+    this.progressStyle = progress == null ? "classic" : progress.getString("style", "classic");
+    ConfigurationSection gradient =
+        progress == null ? null : progress.getConfigurationSection("gradient");
+    this.progressFrom = hex(gradient, "from", success);
+    this.progressTo = hex(gradient, "to", primary);
+    this.progressEmpty = hex(gradient, "empty", muted);
+
     this.sounds = theme == null ? null : theme.getConfigurationSection("sounds");
   }
 
   public ProgressBar progressBar() {
     return progressBar;
+  }
+
+  public String progressStyle() {
+    return progressStyle;
+  }
+
+  /**
+   * Renders the progress bar in the configured style. {@code filledSegments} keeps the animated
+   * fill lined up with its per-step precompute; {@code fraction} drives the smooth sub-cell style.
+   */
+  public String renderBar(int filledSegments, double fraction) {
+    return progressBar.styled(progressStyle, filledSegments, fraction,
+        progressFrom, progressTo, progressEmpty);
   }
 
   public String primary() {
