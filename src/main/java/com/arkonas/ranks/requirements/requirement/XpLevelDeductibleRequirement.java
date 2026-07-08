@@ -20,6 +20,12 @@ public class XpLevelDeductibleRequirement extends XpLevelRequirement implements 
     player.setLevel(player.getLevel() - (int) Math.round(getValueInt() * multiplier));
   }
 
+  /** Deducts the discounted level cost so the amount taken matches {@link #getTotal(Player)}. */
+  @Override
+  public void apply(Player player) {
+    apply(player, costFactor(player));
+  }
+
   @Override
   public Requirement clone() {
     return new XpLevelDeductibleRequirement(this);

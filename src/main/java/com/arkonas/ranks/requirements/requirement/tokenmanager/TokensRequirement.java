@@ -23,6 +23,12 @@ public class TokensRequirement extends ProgressiveRequirement {
     return manager.getTokens(player).orElse(0);
   }
 
+  /** Effective token cost after any active cost multiplier, so a sale discounts tokens too. */
+  @Override
+  public double getTotal(Player player) {
+    return getValueDouble() * costFactor(player);
+  }
+
   @Override
   public TokensRequirement clone() {
     return new TokensRequirement(this);

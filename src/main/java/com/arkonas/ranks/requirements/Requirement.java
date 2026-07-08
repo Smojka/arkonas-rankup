@@ -96,6 +96,15 @@ public abstract class Requirement implements Cloneable {
     return subRequirement;
   }
 
+  /**
+   * The player's current cost multiplier (VIP discount, event booster, scheduled sale), or 1.0 when
+   * no multiplier service is available. Currency requirements scale their cost by this so discounts
+   * apply uniformly across money, XP, tokens and vote points.
+   */
+  protected double costFactor(Player player) {
+    return plugin.getMultipliers() == null ? 1.0 : plugin.getMultipliers().costFactor(player);
+  }
+
   public abstract Requirement clone();
 
   public double getTotal(Player player) {

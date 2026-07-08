@@ -19,8 +19,15 @@ rankups for 30 minutes. Pure `BoosterCommands` (duration units s/m/h/d, factor v
 `MultiplierService.setEventMultiplier`, human-readable status) is unit-tested (8); `InfoCommand` is a
 thin adapter passing the clock in. Tab-complete + help added.
 
-**Still deferred:** per-rank multipliers, and applying the factor to non-money currencies
-(tokens/points).
+**M1c — non-money currency boosts (shipped):** the cost multiplier now applies to XP-level, token
+(TokenManager) and vote-point (VotingPlugin) requirements too, not just money — so a VIP discount or
+a sale halves whatever currency a rank costs. `costFactor` moved to the `Requirement` base; each
+currency's `getTotal` scales (menus/placeholders/affordability agree) and each deductible's
+`apply(player)` deducts the scaled amount. Also fixed a latent bug where the VotingPlugin points
+deductible ignored the multiplier entirely. XP path is unit-tested end-to-end (MockBukkit);
+token/vote mirror the money path.
+
+**Still deferred:** per-rank multipliers, and scaling item-count requirements (fractional items).
 
 ## M2 — Live progress display  (deferred, specced)
 
