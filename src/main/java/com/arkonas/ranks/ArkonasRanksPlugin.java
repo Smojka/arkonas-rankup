@@ -124,6 +124,8 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   @Getter
   private com.arkonas.ranks.milestone.MilestoneService milestones;
   @Getter
+  private com.arkonas.ranks.discord.DiscordAnnouncer discordAnnouncer;
+  @Getter
   private Placeholders placeholders;
   @Getter
   private RankupHelper helper;
@@ -260,6 +262,21 @@ public class ArkonasRanksPlugin extends JavaPlugin {
         stats = null;
       }
     }
+    // Discord announcements (opt-in). Resolve the DiscordSRV adapter only when configured on,
+    // so servers without the dependency never pay the reflection lookup.
+    com.arkonas.ranks.discord.DiscordAnnouncer announcer =
+        com.arkonas.ranks.discord.DiscordAnnouncer.fromConfig(
+            config.getConfigurationSection("discord"),
+            com.arkonas.ranks.discord.DiscordSrvSender.tryCreate(getLogger()));
+    if (announcer.isEnabled()) {
+      discordAnnouncer = announcer;
+      getServer().getPluginManager().registerEvents(
+          new com.arkonas.ranks.discord.DiscordListener(announcer), this);
+    } else if (config.getBoolean("discord.enabled", false)) {
+      getLogger().info("Discord announcements are enabled in config but DiscordSRV was not found;"
+          + " skipping the hook.");
+    }
+
     getServer().getPluginManager().registerEvents(new GuiListener(this), this);
     if (menuModule != null) {
       // the parity GuiListener stays registered for when menus are disabled

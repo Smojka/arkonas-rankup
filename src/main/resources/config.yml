@@ -291,3 +291,12 @@ milestones:
     every: 0
     every-commands: []
     at: {}
+
+# Announce rankups/prestiges to Discord via DiscordSRV (softdepend). Off by default.
+# 'channel' is a DiscordSRV *game* channel name (as in its config.yml linking), not a channel id.
+# Placeholders: %player% %from% %to% %type%. Leave a message blank to skip that event type.
+discord:
+  enabled: false
+  channel: global
+  rankup-message: '**%player%** ranked up: %from% -> %to%'
+  prestige-message: '**%player%** prestiged: %from% -> %to%'
