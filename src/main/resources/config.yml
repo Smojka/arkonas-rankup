@@ -12,6 +12,15 @@ locale: en
 # set to 0 to disable
 autorankup-interval: 0
 
+# which economy the 'money' requirement uses.
+#   auto          - prefer Vault, else the first available backend (default)
+#   vault         - Vault (works with EssentialsX, CMI, and most economy plugins)
+#   playerpoints  - PlayerPoints
+#   coinsengine:<currency> - a named CoinsEngine currency, e.g. coinsengine:gold
+# unknown or unavailable backends fall back to auto-detect.
+economy:
+  provider: auto
+
 # what the auto task does each pass (only runs when autorankup-interval > 0).
 # players still need the rankup.auto permission.
 auto:

@@ -137,7 +137,8 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   protected AutoRankup autoRankup = new AutoRankup(this);
   private String errorMessage;
   private PermissionManager permissionManager = new VaultPermissionManager(this);
-  private EconomyProvider economyProvider = new VaultEconomyProvider();
+  private EconomyProvider economyProvider =
+      new com.arkonas.ranks.economy.ConfigurableEconomyProvider(this);
 
   public ArkonasRanksPlugin() {
     super();
