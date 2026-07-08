@@ -272,7 +272,9 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       discordAnnouncer = announcer;
       getServer().getPluginManager().registerEvents(
           new com.arkonas.ranks.discord.DiscordListener(announcer), this);
-    } else if (config.getBoolean("discord.enabled", false)) {
+    } else if (config.getBoolean("discord.enabled", false)
+        && !getServer().getPluginManager().isPluginEnabled("DiscordSRV")) {
+      // DiscordSRV present but adapter failed -> DiscordSrvSender already logged the real reason
       getLogger().info("Discord announcements are enabled in config but DiscordSRV was not found;"
           + " skipping the hook.");
     }

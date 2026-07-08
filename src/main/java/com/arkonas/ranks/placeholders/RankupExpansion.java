@@ -191,10 +191,15 @@ public class RankupExpansion implements Expansion {
      */
     private String topPlaceholder(Player player, String params) {
         com.arkonas.ranks.data.StatsService stats = plugin.getStats();
-        LeaderboardPlaceholder.Request request = LeaderboardPlaceholder.parse(params);
-        if (request != null) {
+        // keep the original family-first ordering: a top_/prestige_top_ param with the stats
+        // subsystem disabled resolves to "" (not a fall-through), even when it is malformed
+        if (params.startsWith("top_") || params.startsWith("prestige_top_")) {
             if (stats == null) {
                 return "";
+            }
+            LeaderboardPlaceholder.Request request = LeaderboardPlaceholder.parse(params);
+            if (request == null) {
+                return null; // malformed with stats present: fall through, as the old code did
             }
             return leaderboard().render(request, stats.cachedTop(request.prestige()));
         }

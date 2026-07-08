@@ -27,6 +27,15 @@ class NpcRankupSettingsTest {
   }
 
   @Test
+  void scalarDefaultCommandsAccepted() {
+    YamlConfiguration config = new YamlConfiguration();
+    config.set("enabled", true);
+    config.set("default-commands", "rankup"); // scalar, not a list
+    NpcRankupSettings settings = NpcRankupSettings.fromConfig(config);
+    assertEquals(List.of("rankup"), settings.commandsFor(42)); // unlisted -> default
+  }
+
+  @Test
   void noDefaultMeansUnlistedNpcsAreIgnored() {
     YamlConfiguration config = new YamlConfiguration();
     config.set("enabled", true);

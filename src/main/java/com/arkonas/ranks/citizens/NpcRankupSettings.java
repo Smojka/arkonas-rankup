@@ -27,7 +27,11 @@ public final class NpcRankupSettings {
     if (section == null || !section.getBoolean("enabled", false)) {
       return new NpcRankupSettings(false, Map.of(), List.of());
     }
-    List<String> defaults = section.getStringList("default-commands");
+    List<String> defaults = section.isList("default-commands")
+        ? section.getStringList("default-commands")
+        : section.isString("default-commands")
+            ? List.of(section.getString("default-commands"))
+            : List.of();
     Map<Integer, List<String>> commands = new LinkedHashMap<>();
     ConfigurationSection npcs = section.getConfigurationSection("npcs");
     if (npcs != null) {

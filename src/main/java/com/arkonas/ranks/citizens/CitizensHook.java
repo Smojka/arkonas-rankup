@@ -56,8 +56,9 @@ public final class CitizensHook {
           // never let an NPC interaction disrupt the server
         }
       };
+      // ignoreCancelled=true: skip clicks another plugin (protection/region) already cancelled
       Bukkit.getPluginManager().registerEvent(eventClass.asSubclass(Event.class),
-          new Listener() { }, EventPriority.NORMAL, executor, plugin);
+          new Listener() { }, EventPriority.NORMAL, executor, plugin, true);
       return true;
     } catch (Throwable t) {
       plugin.getLogger().warning("Citizens hook unavailable, NPC rankup disabled: " + t);
