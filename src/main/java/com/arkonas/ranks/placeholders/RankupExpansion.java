@@ -21,6 +21,19 @@ public class RankupExpansion implements Expansion {
 
     private final ArkonasRanksPlugin plugin;
     private final Placeholders placeholders;
+    private LeaderboardPlaceholder leaderboard;
+
+    /** Lazily built leaderboard resolver with the configured empty-slot fallbacks. */
+    private LeaderboardPlaceholder leaderboard() {
+        if (leaderboard == null) {
+            org.bukkit.configuration.ConfigurationSection section =
+                plugin.getConfig().getConfigurationSection("placeholders");
+            String emptyName = section == null ? "" : section.getString("leaderboard-empty-name", "");
+            String emptyCount = section == null ? "0" : section.getString("leaderboard-empty-count", "0");
+            leaderboard = new LeaderboardPlaceholder(emptyName, emptyCount);
+        }
+        return leaderboard;
+    }
 
     @Override
     public String placeholder(Player player, String params) {
@@ -178,31 +191,12 @@ public class RankupExpansion implements Expansion {
      */
     private String topPlaceholder(Player player, String params) {
         com.arkonas.ranks.data.StatsService stats = plugin.getStats();
-        boolean prestigeTop = params.startsWith("prestige_top_");
-        if (params.startsWith("top_") || prestigeTop) {
+        LeaderboardPlaceholder.Request request = LeaderboardPlaceholder.parse(params);
+        if (request != null) {
             if (stats == null) {
                 return "";
             }
-            String[] parts = params.split("_");
-            // top_<n>_<field> or prestige_top_<n>_<field>
-            int indexOffset = prestigeTop ? 2 : 1;
-            if (parts.length < indexOffset + 2) {
-                return null;
-            }
-            int position;
-            try {
-                position = Integer.parseInt(parts[indexOffset]);
-            } catch (NumberFormatException e) {
-                return null;
-            }
-            java.util.List<com.arkonas.ranks.data.LeaderboardEntry> entries =
-                stats.cachedTop(prestigeTop);
-            if (position < 1 || position > entries.size()) {
-                return "";
-            }
-            com.arkonas.ranks.data.LeaderboardEntry entry = entries.get(position - 1);
-            return parts[indexOffset + 1].equals("count")
-                ? String.valueOf(entry.count()) : entry.name();
+            return leaderboard().render(request, stats.cachedTop(request.prestige()));
         }
         if (params.equals("player_rankups") || params.equals("player_prestiges")) {
             if (stats == null) {

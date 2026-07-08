@@ -128,6 +128,10 @@ placeholders:
   no-prestige: "None"
   # used in the next_rank and next_prestige placeholders when a player is at the highest rank or prestige
   highest-rank: "None"
+  # fallback text for empty leaderboard slots in top_<n>_name / top_<n>_count placeholders
+  # (used by hologram/TAB/scoreboard plugins when the leaderboard has fewer than <n> players)
+  leaderboard-empty-name: ''
+  leaderboard-empty-count: '0'
   # used in the %rankup_status_[rank]% placeholders
   status:
     complete: "Complete"

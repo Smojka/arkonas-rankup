@@ -21,14 +21,25 @@ Vault unchanged out of the box; **PlayerPoints** and **CoinsEngine** ship as ref
 most economies already work through Vault. Still deferred: GemsEconomy, RedisEconomy, PlayerPoints
 as a *currency requirement type* (vs the money backend).
 
+### Discord announcements  (M3, shipped)
+`DiscordAnnouncer` (tested render + dispatch + config parse) fires on the plugin's own
+rankup/prestige events at MONITOR and delivers through a `DiscordSender` adapter. `DiscordSrvSender`
+is the DiscordSRV reflection adapter (handles resolved up front; the JDA `sendMessage` overload is
+found by shape so it survives JDA package moves; no-op when DiscordSRV is absent — validate live).
+Config `discord.*` (channel + `%player%/%from%/%to%/%type%` templates), opt-in, softdepend.
+
+### Leaderboard holograms via placeholders  (M4, shipped)
+Rather than bind to one hologram plugin's API, the leaderboard-position placeholders
+(`top_<n>_name/count`, `prestige_top_<n>_name/count`) are the substrate **DecentHolograms,
+HolographicDisplays and TAB all read through PlaceholderAPI**. Resolution extracted to a pure,
+unit-tested `LeaderboardPlaceholder` with configurable empty-slot fallbacks
+(`placeholders.leaderboard-empty-name/-count`). A *native* auto-spawned/refreshed hologram (managed
+by the plugin at a configured location) remains a live-server extra.
+
 ## Priority hooks still to add
 
 ### Permissions / groups  (M2)
 - **CMI** groups (alongside the existing LuckPerms + generic Vault providers).
-
-### Holograms  (M3)
-- **DecentHolograms** and **HolographicDisplays**: a leaderboard hologram (top rankups/prestiges)
-  and an at-spawn progress hologram. `HologramProvider` interface, one impl per plugin.
 
 ### Custom items / GUI textures  (M4)  — feeds Track 2 M1/M4
 - **Oraxen / ItemsAdder / Nexo**: resolve namespaced item ids (`oraxen:rank_icon`) to ItemStacks
@@ -41,8 +52,10 @@ as a *currency requirement type* (vs the money backend).
 ### Requirement sources  (M6)
 - **Jobs Reborn** (`jobs-level <job> <n>`), **WorldGuard** (`region <id>`), **Quests**/**BetonQuest**.
 
-### Announcements  (M7)
-- **DiscordSRV**: broadcast rankups/prestiges/rebirths to a Discord channel.
+### Native holograms  (M7)  — extends M4
+- **DecentHolograms / HolographicDisplays** API adapter to auto-create + refresh a managed
+  leaderboard hologram at a configured location (the placeholder route above already powers
+  user-authored holograms).
 
 ### Scoreboard / nametag  (M8)  — feeds Track 3 M2
 - **TAB**, **FeatherBoard**: expose progress placeholders / drive sidebar lines.
