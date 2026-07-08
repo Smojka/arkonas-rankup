@@ -14,6 +14,16 @@ rankup:
     name: entity.player.levelup
     volume: 1.0
     pitch: 1.0
+  # short ascending note-block "jingle" played on rankup (opt-in). Pitch is
+  # clamped to the musical note-block range 0.5-2.0.
+  jingle:
+    enabled: false
+    sound: block.note_block.pling
+    notes: 5
+    start-pitch: 0.8
+    pitch-step: 0.15
+    interval-ticks: 3
+    volume: 1.0
   particle:
     type: TOTEM_OF_UNDYING
     count: 40

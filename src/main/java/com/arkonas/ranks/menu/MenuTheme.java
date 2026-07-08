@@ -154,7 +154,17 @@ public class MenuTheme {
     if (sounds == null || player == null) {
       return;
     }
-    String name = sounds.getString(key, "");
+    String name;
+    float volume = 0.6f;
+    float pitch = 1.2f;
+    if (sounds.isConfigurationSection(key)) {
+      ConfigurationSection sound = sounds.getConfigurationSection(key);
+      name = sound.getString("name", "");
+      volume = (float) sound.getDouble("volume", 0.6);
+      pitch = (float) sound.getDouble("pitch", 1.2);
+    } else {
+      name = sounds.getString(key, "");
+    }
     if (name.isEmpty()) {
       return;
     }
@@ -162,7 +172,7 @@ public class MenuTheme {
       Sound parsed = Registry.SOUNDS.get(
           NamespacedKey.minecraft(name.toLowerCase().replace(' ', '_')));
       if (parsed != null) {
-        player.playSound(player.getLocation(), parsed, 0.6f, 1.2f);
+        player.playSound(player.getLocation(), parsed, volume, pitch);
       }
     } catch (Exception ignored) {
       // MockBukkit / unusual servers may not expose the sound registry
