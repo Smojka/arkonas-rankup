@@ -88,6 +88,35 @@ public final class MenuItems {
     }
   }
 
+  /**
+   * Applies display name, lore, glow and custom-model-data to an already-created item (for example
+   * one supplied by a custom-item plugin), leaving its type and texture intact.
+   */
+  public static ItemStack decorate(ItemStack item, Component name, List<Component> lore,
+      boolean glow, Integer customModelData) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta != null) {
+      if (name != null) {
+        meta.displayName(name);
+      }
+      if (lore != null && !lore.isEmpty()) {
+        meta.lore(lore);
+      }
+      if (glow) {
+        applyGlow(meta);
+      }
+      if (customModelData != null) {
+        try {
+          meta.setCustomModelData(customModelData);
+        } catch (Throwable ignored) {
+          // pre-1.14 server; ignore
+        }
+      }
+      item.setItemMeta(meta);
+    }
+    return item;
+  }
+
   public static void applyGlow(ItemMeta meta) {
     try {
       meta.setEnchantmentGlintOverride(true);

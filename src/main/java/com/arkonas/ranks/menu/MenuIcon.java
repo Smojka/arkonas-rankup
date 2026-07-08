@@ -5,6 +5,7 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
+import com.arkonas.ranks.menu.items.NamespacedItems;
 
 /**
  * A resolved icon definition for a menu item: a base material plus optional modern touches — a
@@ -15,19 +16,26 @@ import org.bukkit.inventory.ItemStack;
 public final class MenuIcon {
 
   private final Material material;
+  private final String itemId;
   private final Integer customModelData;
   private final String headTexture;
   private final boolean glow;
 
   public MenuIcon(Material material, Integer customModelData, String headTexture, boolean glow) {
+    this(material, null, customModelData, headTexture, glow);
+  }
+
+  public MenuIcon(Material material, String itemId, Integer customModelData, String headTexture,
+      boolean glow) {
     this.material = material;
+    this.itemId = itemId;
     this.customModelData = customModelData;
     this.headTexture = headTexture;
     this.glow = glow;
   }
 
   public static MenuIcon of(Material material) {
-    return new MenuIcon(material, null, null, false);
+    return new MenuIcon(material, null, null, null, false);
   }
 
   /**
@@ -46,19 +54,25 @@ public final class MenuIcon {
     if (parent.isConfigurationSection(key)) {
       return fromSection(parent.getConfigurationSection(key), fallback);
     }
-    return new MenuIcon(material(parent.getString(key), fallback), null, null, false);
+    String value = parent.getString(key);
+    if (NamespacedItems.isNamespaced(value)) {
+      return new MenuIcon(fallback, value, null, null, false);
+    }
+    return new MenuIcon(material(value, fallback), null, null, null, false);
   }
 
   public static MenuIcon fromSection(ConfigurationSection section, Material fallback) {
     if (section == null) {
       return of(fallback);
     }
-    Material material = material(section.getString("material"), fallback);
+    String materialValue = section.getString("material");
+    String itemId = NamespacedItems.isNamespaced(materialValue) ? materialValue : null;
+    Material material = itemId != null ? fallback : material(materialValue, fallback);
     Integer cmd = section.contains("custom-model-data")
         ? section.getInt("custom-model-data") : null;
     String head = section.getString("head-texture");
     boolean glow = section.getBoolean("glow", false);
-    return new MenuIcon(material, cmd, head, glow);
+    return new MenuIcon(material, itemId, cmd, head, glow);
   }
 
   public Material material() {
@@ -77,9 +91,24 @@ public final class MenuIcon {
     return glow;
   }
 
-  /** Builds the icon item, forcing the glow on if either the config or the caller requests it. */
+  public String itemId() {
+    return itemId;
+  }
+
+  /**
+   * Builds the icon item, forcing the glow on if either the config or the caller requests it. When
+   * a namespaced item id is set and its provider is registered, that custom item is used; otherwise
+   * it falls back to the plain material.
+   */
   public ItemStack build(Component name, List<Component> lore, boolean glowOverride) {
-    return MenuItems.build(material, name, lore, glow || glowOverride, customModelData, headTexture);
+    boolean glowNow = glow || glowOverride;
+    if (itemId != null) {
+      ItemStack resolved = NamespacedItems.active().create(itemId);
+      if (resolved != null) {
+        return MenuItems.decorate(resolved, name, lore, glowNow, customModelData);
+      }
+    }
+    return MenuItems.build(material, name, lore, glowNow, customModelData, headTexture);
   }
 
   private static Material material(String name, Material fallback) {
