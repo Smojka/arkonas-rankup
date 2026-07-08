@@ -56,8 +56,15 @@ prefix runs from console, `%player%` is substituted. `NpcRankupSettings` + `NpcC
 and unit-tested (11 methods: list/scalar/default/disabled parse, console/player routing, slash
 strip); the reflection listener (`CitizensHook`) is the live-validate part. Opt-in, softdepend.
 
-### Requirement sources  (M6)
-- **Jobs Reborn** (`jobs-level <job> <n>`), **WorldGuard** (`region <id>`), **Quests**/**BetonQuest**.
+### Requirement sources  (M6, partly shipped)
+- **WorldGuard** (`region <id>` / `region <id1> <id2>` = any-of): shipped. `WorldGuardRegionRequirement`
+  registered when WorldGuard is enabled; the region query is the reflection `WorldGuardRegions`
+  adapter (no compile dep, empty-set on failure so it fails closed), the membership test
+  (`matches`) is pure + unit-tested (5). Softdepend WorldGuard.
+- **Jobs Reborn** (`jobs-level <job> <n>`): not needed as a dedicated type — the existing
+  `PlaceholderRequirement` already gates on `%jobs_...%` (and mcMMO/votes/playtime/stats), so any
+  PlaceholderAPI-exposed value works out of the box.
+- Still open: **Quests**/**BetonQuest** completion requirements.
 
 ### Native holograms  (M7)  — extends M4
 - **DecentHolograms / HolographicDisplays** API adapter to auto-create + refresh a managed

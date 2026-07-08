@@ -654,6 +654,11 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     if (Bukkit.getPluginManager().isPluginEnabled("SuperbVote")) {
       requirements.addRequirements(new SuperbVoteVotesRequirement(this));
     }
+    if (Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) {
+      requirements.addRequirements(
+          new com.arkonas.ranks.requirements.requirement.worldguard.WorldGuardRegionRequirement(
+              this));
+    }
   }
 
   private void setupEconomy() {
