@@ -28,7 +28,13 @@ Config `progress-display.{expbar,bossbar,actionbar,scoreboard}` with intervals. 
 `BukkitRunnable` (like `MenuTicker`) drives updates; reuse the `ProgressBar` renderers from Track 2
 for the bossbar/actionbar text.
 
-## M3 — Milestone rewards + sales  (deferred, specced)
+## M3 — Milestone rewards  (shipped)
 
-- **Milestones**: reward commands every N rankups/prestiges (reads the stats service counts).
-- **Sales/events**: scheduled temporary global discounts via the event booster from M1.
+Reward commands when a player's cumulative rankup/prestige count hits a milestone (specific `at`
+count, precedence over an `every N` cadence). `StatsService` gained a `MilestoneHook` invoked on
+the stats thread right after the write, so the count is never raced; `MilestoneService` selects
+(pure `commandsForRecord`) and dispatches on the main thread. Config `milestones.*`, opt-in, needs
+the database. Tests: tier selection + record routing + config parse + fresh-count integration.
+
+**Deferred:** sales/events (scheduled temporary global discounts via the M1 event booster) and a
+`/aru booster` admin command.
