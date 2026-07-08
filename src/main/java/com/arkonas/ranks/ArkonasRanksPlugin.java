@@ -309,6 +309,13 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       long interval = progressDisplay.intervalTicks(config.getConfigurationSection("progress-display"));
       progressDisplay.runTaskTimer(this, interval, interval);
     }
+
+    // recurring cost sales (opt-in). Starting/stopping the scheduler needs a restart.
+    com.arkonas.ranks.multiplier.SaleSchedule saleSchedule =
+        com.arkonas.ranks.multiplier.SaleSchedule.fromConfig(config.getConfigurationSection("boosters"));
+    if (!saleSchedule.isEmpty() && multipliers != null) {
+      new com.arkonas.ranks.multiplier.SaleScheduler(saleSchedule, multipliers).start(this);
+    }
   }
 
 

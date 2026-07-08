@@ -42,5 +42,10 @@ the stats thread right after the write, so the count is never raced; `MilestoneS
 (pure `commandsForRecord`) and dispatches on the main thread. Config `milestones.*`, opt-in, needs
 the database. Tests: tier selection + record routing + config parse + fresh-count integration.
 
-**Deferred:** scheduled/recurring sales (auto-start a discount on a cron/timer). Manual sales now
-work via the shipped `/aru booster` command (M1b).
+**M3b — recurring sales (shipped):** config `boosters.schedule` lists weekly windows
+(`days` + `start`/`end` HH:mm server-local + `factor`); a `SaleScheduler` runnable reflects the
+active window into the event slot each minute (auto-expires when the window closes). A manual
+`/aru booster` always wins while active (tracked via an `eventManual` flag on `MultiplierService`);
+the scheduler resumes when it expires. Pure `SaleSchedule` (parse/coverage/overlap-lowest/malformed-
+skip) + `SaleScheduler.apply` precedence are unit-tested (10). Overlapping windows use the best
+(lowest) factor. Deferred: per-rank multipliers, non-money currency boosts.

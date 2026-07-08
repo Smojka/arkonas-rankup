@@ -259,6 +259,17 @@ multipliers:
     rankup.multiplier.vip: 0.9
     rankup.multiplier.mvp: 0.8
 
+# Recurring cost sales / auto-boosters. Each window applies 'factor' to rankup costs on the given
+# days between server-local 'start' and 'end' (HH:mm, end exclusive). A manual /aru booster overrides
+# these while it is active. 'days': weekday names (MONDAY..SUNDAY) or [ALL]. Overlapping windows use
+# the best (lowest) factor. Starting/stopping the scheduler needs a server restart.
+boosters:
+  schedule: []
+  #  - days: [SATURDAY, SUNDAY]
+  #    start: '18:00'
+  #    end: '20:00'
+  #    factor: 0.5
+
 # Always-on progress display toward the next rank (optional). Placeholders in the
 # text: %percent%, %rank%, %next%, %player%. Toggling this needs a server restart.
 # The exp-bar mirror overwrites the vanilla XP bar fill (not the level).

@@ -21,6 +21,7 @@ public final class MultiplierService {
   private final Map<String, Double> permissionFactors;
   private double eventFactor = 1.0;
   private long eventUntilMillis = 0L;
+  private boolean eventManual = false;
 
   public MultiplierService(double global, Map<String, Double> permissionFactors) {
     this.global = global;
@@ -47,12 +48,29 @@ public final class MultiplierService {
   }
 
   /**
-   * Sets a temporary server-wide multiplier active until {@code untilMillis} (epoch). Used by an
-   * event/booster command.
+   * Sets a temporary server-wide multiplier active until {@code untilMillis} (epoch). Marks it as a
+   * manual booster (the {@code /aru booster} command), which takes precedence over scheduled sales.
    */
   public void setEventMultiplier(double factor, long untilMillis) {
     this.eventFactor = factor;
     this.eventUntilMillis = untilMillis;
+    this.eventManual = true;
+  }
+
+  /**
+   * Sets the event slot from the recurring sale scheduler. Refreshed each tick, so it must not mark
+   * the slot manual; the scheduler is responsible for checking {@link #isManualEvent()} first and
+   * yielding to an active manual booster.
+   */
+  public void setScheduledEvent(double factor, long untilMillis) {
+    this.eventFactor = factor;
+    this.eventUntilMillis = untilMillis;
+    this.eventManual = false;
+  }
+
+  /** Whether the active event came from the manual command (vs the sale scheduler). */
+  public boolean isManualEvent() {
+    return eventManual;
   }
 
   public boolean isEventActive(long nowMillis) {
