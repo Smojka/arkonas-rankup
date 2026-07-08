@@ -6,13 +6,22 @@ Goal (the "vary-dependency" / flexibility aim): hook the plugins servers actuall
 Current hooks: Vault (hard), LuckPerms, PlaceholderAPI, mcMMO, AdvancedAchievements, Towny,
 SuperbVote, VotingPlugin, TokenManager.
 
-## Priority hooks to add
+## Shipped
 
-### Economy / currency abstraction  (M1)
-An `EconomyProvider` registry choosing a backend at load, so `money` works beyond Vault:
-- **CMI** economy (very common), **CoinsEngine**, **PlayerPoints**, **GemsEconomy**, **RedisEconomy**.
-- New requirement types for multi-currency: `coinsengine-<currency>`, `playerpoints`, `gems`.
-Config `economy.provider: auto|vault|cmi|coinsengine:<cur>|playerpoints|...`.
+### Namespaced item provider seam  (M1, shipped)
+`NamespacedItems` registry + `NamespacedItemProvider` — menu icons resolve `ns:key` ids to items
+from Oraxen/ItemsAdder/Nexo/HeadDatabase. Tested (registry + MenuIcon fallback). Concrete
+per-plugin providers register into it (below).
+
+### Economy / currency abstraction  (M2, shipped)
+`EconomyRegistry` (tested selection + auto-detect + graceful fallback) + `ConfigurableEconomyProvider`
+(now the default provider) selecting from `economy.provider` (default `auto`, prefers Vault).
+Vault unchanged out of the box; **PlayerPoints** and **CoinsEngine** ship as reflection adapters
+(no compile dep; degrade to Vault on any mismatch — validate on a live server). CMI/EssentialsX and
+most economies already work through Vault. Still deferred: GemsEconomy, RedisEconomy, PlayerPoints
+as a *currency requirement type* (vs the money backend).
+
+## Priority hooks still to add
 
 ### Permissions / groups  (M2)
 - **CMI** groups (alongside the existing LuckPerms + generic Vault providers).
