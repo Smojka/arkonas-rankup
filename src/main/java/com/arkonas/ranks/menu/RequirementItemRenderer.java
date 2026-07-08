@@ -39,7 +39,7 @@ public class RequirementItemRenderer {
   public ItemStack render(Player player, Requirement requirement, int barSegments) {
     MenuTheme theme = module.getTheme();
     MenuText text = module.getText();
-    Material material = module.getIcons().forRequirement(requirement.getName());
+    MenuIcon icon = module.getIcons().iconFor(requirement.getName());
     boolean met = requirement.check(player);
     String colour = met ? theme.success() : theme.danger();
 
@@ -73,7 +73,7 @@ public class RequirementItemRenderer {
         ? text.raw("rankup.requirement-met", "&a✔ Requirement met")
         : text.raw("rankup.requirement-unmet", "&c✖ Not met yet")));
 
-    return MenuItems.build(material, name, lore, met);
+    return icon.build(name, lore, met);
   }
 
   /** The number of filled bar segments for a requirement's actual progress. */
