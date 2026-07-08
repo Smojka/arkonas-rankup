@@ -207,3 +207,30 @@ cost-formula:
 #       expression: "500 * 1.2 ^ {index}"
 #       round: 2
 #       override: false
+
+# Rebirth (optional). A progression tier above rankup/prestige: a player who has
+# reached the top can "be reborn", advancing through the rebirth groups below and
+# resetting back to the first rank, in exchange for requirements and reward commands.
+# Commands: /rebirth and /rebirths (permission rankup.rebirth). Disabled by default.
+rebirth:
+  enabled: false
+  # what must be maxed before a rebirth is allowed: top-rank or top-prestige
+  requires: top-rank
+  # the ordered rebirth permission groups; players advance one per rebirth
+  groups:
+    - rebirth1
+    - rebirth2
+    - rebirth3
+  # send the player back to the first rank group after a rebirth
+  reset-ranks: true
+  # requirements to be reborn (same syntax as rank requirements)
+  requirements:
+    - 'money 1000000'
+  # console commands run on rebirth ({player} and {rebirth} are replaced)
+  commands: []
+  # messages ({player}/{rebirth} placeholders, & colour codes)
+  messages:
+    success: '&aYou have been reborn as &e{rebirth}&a!'
+    requirements-not-met: '&cYou do not meet the requirements to be reborn.'
+    not-at-top: '&cYou must reach the top of your progression before you can be reborn.'
+    maxed: '&cYou have reached the maximum rebirth.'

@@ -116,6 +116,8 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   @Getter
   private Prestiges prestiges;
   @Getter
+  private com.arkonas.ranks.rebirth.RebirthManager rebirth;
+  @Getter
   private Placeholders placeholders;
   @Getter
   private RankupHelper helper;
@@ -216,6 +218,11 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     if (config.getBoolean("max-rankup.enabled")) {
       getCommand("maxrankup").setExecutor(new MaxRankupCommand(this));
       getCommand("maxrankup").setTabCompleter(new com.arkonas.ranks.commands.LadderTabCompleter(this));
+    }
+
+    if (config.getBoolean("rebirth.enabled")) {
+      getCommand("rebirth").setExecutor(new com.arkonas.ranks.commands.RebirthCommand(this));
+      getCommand("rebirths").setExecutor(new com.arkonas.ranks.commands.RebirthsCommand(this));
     }
 
     RankupCommand rankupParity = new RankupCommand(this);
@@ -413,6 +420,9 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       ladders = new com.arkonas.ranks.ladder.LadderRegistry();
       ladders.put(com.arkonas.ranks.ladder.LadderRegistry.DEFAULT, rankups);
       loadExtraLadders();
+
+      rebirth = com.arkonas.ranks.rebirth.RebirthManager.fromConfig(
+          this, getConfig().getConfigurationSection("rebirth"));
 
 
     } catch (RuntimeException e) {

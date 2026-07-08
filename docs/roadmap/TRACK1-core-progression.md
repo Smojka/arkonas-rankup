@@ -126,6 +126,12 @@ rebirth:
 Tests: rebirth requires top prestige; reset moves groups correctly; auto-rebirth; placeholders
 `%rankup_current_rebirth%` etc.; disabled → no `/rebirth`.
 
+**Shipped (M4):** `RebirthManager` (opt-in, self-contained — messages in its own config block,
+no locale-file churn), ordered rebirth permission groups, gate on top-rank or top-prestige,
+reset-to-first-rank, requirements + reward commands, `/rebirth` + `/rebirths`, `rankup.rebirth`
+perm. **Deferred to M4b:** reset-prestige, auto-rebirth in the auto task, `%rankup_*_rebirth%`
+placeholders, and a full per-tier requirement ladder (current groups advance one tier per call).
+
 ---
 
 ## Sequencing & commits
