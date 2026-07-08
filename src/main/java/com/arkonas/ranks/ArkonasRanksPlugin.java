@@ -277,6 +277,19 @@ public class ArkonasRanksPlugin extends JavaPlugin {
           + " skipping the hook.");
     }
 
+    // Citizens NPC rankup (opt-in). Registered by reflection, so no Citizens compile dependency.
+    com.arkonas.ranks.citizens.NpcRankupSettings npcSettings =
+        com.arkonas.ranks.citizens.NpcRankupSettings.fromConfig(
+            config.getConfigurationSection("citizens"));
+    if (npcSettings.isEnabled()) {
+      if (com.arkonas.ranks.citizens.CitizensHook.register(this, npcSettings)) {
+        getLogger().info("Citizens NPC rankup hook enabled.");
+      } else {
+        getLogger().info("Citizens NPC rankup is enabled in config but Citizens was not found;"
+            + " skipping the hook.");
+      }
+    }
+
     getServer().getPluginManager().registerEvents(new GuiListener(this), this);
     if (menuModule != null) {
       // the parity GuiListener stays registered for when menus are disabled

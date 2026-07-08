@@ -304,3 +304,16 @@ discord:
   channel: global
   rankup-message: '**%player%** ranked up: %from% -> %to%'
   prestige-message: '**%player%** prestiged: %from% -> %to%'
+
+# Citizens NPC rankup (softdepend). Right-click an NPC to run commands as the clicker.
+# Off by default. Prefix a line with [console] to run it from console (default is as the player);
+# %player% is replaced. Each entry is a single command or a list of commands.
+citizens:
+  enabled: false
+  # commands for NPCs whose id is not listed under 'npcs' (empty = ignore those NPCs)
+  default-commands: []
+  npcs: {}
+    # 0: maxrankup
+    # 1:
+    #   - 'rankup'
+    #   - '[console] broadcast &e%player% used the rankup NPC!'

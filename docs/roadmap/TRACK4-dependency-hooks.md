@@ -46,8 +46,15 @@ by the plugin at a configured location) remains a live-server extra.
   for menu icons; **HeadDatabase** (`hdb:<id>`) for textured heads. An `ItemProvider` the
   `MenuIcon` builder consults when the material string is namespaced.
 
-### NPC rankup  (M5)
-- **Citizens**: right-click an NPC to rank up / open the menu (trait or listener).
+### NPC rankup  (M5, shipped)
+**Citizens**: right-click an NPC to run configured commands as the clicker. Wired by reflection —
+no Citizens compile dependency — by registering a handler for Citizens' own `NPCRightClickEvent`
+through `PluginManager#registerEvent` (so player-type NPCs, which don't fire vanilla interact
+events, are covered). Config `citizens.npcs.<id>` maps an NPC id to a command or list of commands
+(NPC id -> command list is strictly more flexible than a fixed rankup/menu action); `[console]`
+prefix runs from console, `%player%` is substituted. `NpcRankupSettings` + `NpcCommand` are pure
+and unit-tested (11 methods: list/scalar/default/disabled parse, console/player routing, slash
+strip); the reflection listener (`CitizensHook`) is the live-validate part. Opt-in, softdepend.
 
 ### Requirement sources  (M6)
 - **Jobs Reborn** (`jobs-level <job> <n>`), **WorldGuard** (`region <id>`), **Quests**/**BetonQuest**.
