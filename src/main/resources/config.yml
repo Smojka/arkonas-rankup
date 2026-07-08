@@ -245,3 +245,19 @@ multipliers:
   permissions:
     rankup.multiplier.vip: 0.9
     rankup.multiplier.mvp: 0.8
+
+# Always-on progress display toward the next rank (optional). Placeholders in the
+# text: %percent%, %rank%, %next%, %player%. Toggling this needs a server restart.
+# The exp-bar mirror overwrites the vanilla XP bar fill (not the level).
+progress-display:
+  enabled: false
+  interval-ticks: 20
+  expbar: false
+  bossbar:
+    enabled: false
+    text: '&aNext: %next% &7- &e%percent%%'
+    color: GREEN      # PINK BLUE RED GREEN YELLOW PURPLE WHITE
+    overlay: PROGRESS # PROGRESS NOTCHED_6 NOTCHED_10 NOTCHED_12 NOTCHED_20
+  actionbar:
+    enabled: false
+    text: '&7Progress to %next%: &e%percent%%'

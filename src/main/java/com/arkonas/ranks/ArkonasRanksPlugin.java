@@ -120,6 +120,8 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   @Getter
   private com.arkonas.ranks.multiplier.MultiplierService multipliers;
   @Getter
+  private com.arkonas.ranks.progress.ProgressDisplay progressDisplay;
+  @Getter
   private Placeholders placeholders;
   @Getter
   private RankupHelper helper;
@@ -259,6 +261,13 @@ public class ArkonasRanksPlugin extends JavaPlugin {
 
     placeholders = new Placeholders(this);
     placeholders.register();
+
+    // live progress display (opt-in). Toggling it needs a restart, like other scheduled features.
+    if (progressDisplay != null) {
+      getServer().getPluginManager().registerEvents(progressDisplay, this);
+      long interval = progressDisplay.intervalTicks(config.getConfigurationSection("progress-display"));
+      progressDisplay.runTaskTimer(this, interval, interval);
+    }
   }
 
 
@@ -428,6 +437,9 @@ public class ArkonasRanksPlugin extends JavaPlugin {
 
       multipliers = com.arkonas.ranks.multiplier.MultiplierService.fromConfig(
           getConfig().getConfigurationSection("multipliers"));
+
+      progressDisplay = com.arkonas.ranks.progress.ProgressDisplay.fromConfig(
+          this, getConfig().getConfigurationSection("progress-display"));
 
 
     } catch (RuntimeException e) {
