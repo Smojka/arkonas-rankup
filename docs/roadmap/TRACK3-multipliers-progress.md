@@ -13,8 +13,14 @@ parity is untouched. Config `multipliers.{global, permissions}`; a mutable event
 Tests: disabled neutral, global, best-permission-wins, event active/expired, end-to-end discounted
 rankup cost + deduction.
 
-**Deferred to M1b:** a `/aru booster <factor> <seconds>` admin command (service method exists),
-per-rank multipliers, and applying the factor to non-money currencies (tokens/points).
+**M1b — `/aru booster` command (shipped):** `booster <factor> <duration> | clear | status`
+(rankup.admin) starts a temporary server-wide cost booster/sale, e.g. `booster 0.5 30m` = half-price
+rankups for 30 minutes. Pure `BoosterCommands` (duration units s/m/h/d, factor validation, apply via
+`MultiplierService.setEventMultiplier`, human-readable status) is unit-tested (8); `InfoCommand` is a
+thin adapter passing the clock in. Tab-complete + help added.
+
+**Still deferred:** per-rank multipliers, and applying the factor to non-money currencies
+(tokens/points).
 
 ## M2 — Live progress display  (deferred, specced)
 
@@ -36,5 +42,5 @@ the stats thread right after the write, so the count is never raced; `MilestoneS
 (pure `commandsForRecord`) and dispatches on the main thread. Config `milestones.*`, opt-in, needs
 the database. Tests: tier selection + record routing + config parse + fresh-count integration.
 
-**Deferred:** sales/events (scheduled temporary global discounts via the M1 event booster) and a
-`/aru booster` admin command.
+**Deferred:** scheduled/recurring sales (auto-start a discount on a cron/timer). Manual sales now
+work via the shipped `/aru booster` command (M1b).

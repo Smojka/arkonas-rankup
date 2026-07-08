@@ -59,6 +59,16 @@ public final class MultiplierService {
     return nowMillis < eventUntilMillis;
   }
 
+  /** The active event booster factor (only meaningful while {@link #isEventActive} is true). */
+  public double eventFactor() {
+    return eventFactor;
+  }
+
+  /** Epoch millis the event booster runs until (0 = none). */
+  public long eventUntilMillis() {
+    return eventUntilMillis;
+  }
+
   /** The cost multiplier for a player (1.0 = unchanged). Never negative. */
   public double costFactor(Player player) {
     double factor = global;

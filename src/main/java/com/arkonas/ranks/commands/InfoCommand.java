@@ -189,6 +189,13 @@ public class InfoCommand implements TabExecutor {
           sender.sendMessage(placeholder + ": " + result);
         }
         return true;
+      } else if (args[0].equalsIgnoreCase("booster") && sender.hasPermission("rankup.admin")) {
+        String[] sub = args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : new String[0];
+        com.arkonas.ranks.multiplier.BoosterCommands.Result result =
+            com.arkonas.ranks.multiplier.BoosterCommands.handle(
+                plugin.getMultipliers(), sub, System.currentTimeMillis());
+        sender.sendMessage((result.success() ? ChatColor.GREEN : ChatColor.YELLOW) + result.message());
+        return true;
       } else if (args[0].equalsIgnoreCase("tree") && sender.hasPermission("rankup.admin")) {
         RankElement<Rank> element = plugin.getRankups().getTree().getFirst();
         while (element.hasNext()) {
@@ -334,6 +341,10 @@ public class InfoCommand implements TabExecutor {
     if (sender.hasPermission("rankup.playtime")) {
       sender.sendMessage(ChatColor.GREEN + "/" + label + " playtime " + ChatColor.YELLOW + "View your playtime");
     }
+    if (sender.hasPermission("rankup.admin")) {
+      sender.sendMessage(ChatColor.GREEN + "/" + label + " booster <factor> <duration> "
+          + ChatColor.YELLOW + "Start a temporary server-wide cost booster (sale), or clear/status.");
+    }
 
     if (sender.hasPermission("rankup.checkversion")) {
       notifier.notify(sender, false);
@@ -357,8 +368,15 @@ public class InfoCommand implements TabExecutor {
       if (sender.hasPermission("rankup.playtime.get") || sender.hasPermission("rankup.playtime")) {
         list.add("playtime");
       }
+      if (sender.hasPermission("rankup.admin")) {
+        list.add("booster");
+      }
       return StringUtil.copyPartialMatches(args[0], list, new ArrayList<>());
     } else if (args.length == 2) {
+      if (args[0].equalsIgnoreCase("booster") && sender.hasPermission("rankup.admin")) {
+        return StringUtil.copyPartialMatches(args[1],
+            Arrays.asList("status", "clear"), new ArrayList<>());
+      }
       if (args[0].equalsIgnoreCase("forcerankup") && sender.hasPermission("rankup.force")) {
         return StringUtil.copyPartialMatches(args[1], players(), new ArrayList<>());
       } else if (args[0].equalsIgnoreCase("forceprestige") && sender.hasPermission("rankup.force") && plugin.getPrestiges() != null) {
