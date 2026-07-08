@@ -32,18 +32,22 @@ gradient/smooth bars.
 fraction of a cell at a time. `ProgressBar.gradientBar(fraction, from, to, empty)` emits a
 MiniMessage `<gradient>` over the filled portion with a dim empty tail. Both unit-tested.
 
-**Deferred to M2b:** a `theme.progress.style: blocks|smooth|gradient` toggle wired into
-`RequirementItemRenderer` (the renderer pre-builds animation frames with `partialBar`, so smooth/
-gradient need frame-aware plumbing and a MiniMessage lore path for the bar line).
+**Shipped (M2b):** `theme.progress.style: classic|smooth|gradient` wired through
+`ProgressBar.styled` + `gradientPartial` (segment-indexed so the fill animation stays frame-safe)
+and `MenuTheme.renderBar`; degrades gradient → classic under `message-format: legacy`.
 
-## M3 — Transitions + sound palette  (deferred, specced)
+## M3 — Transitions + sound palette  (shipped)
 
-- **Transitions**: an open-reveal (cascade/wipe fill of border + tiles) and a page-turn slide,
-  driven by the existing `MenuTicker` frame clock. Add `theme.transitions.{open,page}` toggles.
-- **Sound palette**: expand `MenuTheme` sounds beyond open/click/page/deny — per-screen open
-  sounds, a rankup jingle (a short note sequence with pitch ramp), distinct prestige/rebirth
-  stingers, and a confirm-hold pitch ramp. Config `theme.sounds.*` + `theme.jingle`.
-- **Multi-frame cycling icons**: allow an icon to define frames the ticker cycles (shimmer/glint).
+- **Open-reveal transition (shipped):** opt-in row-major wipe-in driven by `MenuTicker`; snapshot
+  in `open()`, reveal in `tick()` as the first branch (honours the no-Pebble/no-alloc invariant),
+  cancels on `refresh()`, snaps + swallows a mid-reveal click, and content animations key off a
+  `revealDoneFrame`. Config `animation.open-reveal` + `open-reveal-speed` (default off).
+- **Sound palette (shipped):** `MenuTheme.playSound` accepts a string or `{name,volume,pitch}`
+  section (tunable UI sounds); rankup **jingle** in `CelebrationEffects` — an ascending note-block
+  sequence, pitch-clamped, fired once per rankup via the MONITOR listener. effects.yml
+  `rankup.jingle`.
+- **Deferred:** page-turn slide transition, distinct prestige/rebirth stingers, multi-frame
+  cycling (shimmer) icons.
 
 ## M4 — Resource-pack custom-texture GUI mode  (deferred, specced)
 
