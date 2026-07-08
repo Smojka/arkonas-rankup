@@ -12,6 +12,17 @@ locale: en
 # set to 0 to disable
 autorankup-interval: 0
 
+# what the auto task does each pass (only runs when autorankup-interval > 0).
+# players still need the rankup.auto permission.
+auto:
+  # automatically rank players up
+  rankup: true
+  # automatically prestige players who are at the top rank (needs prestige: true)
+  prestige: true
+  # rank up repeatedly in a single pass until the player can no longer afford it
+  # (false = advance at most one rank per pass, the classic behaviour)
+  max: false
+
 # whether /ranks and /prestiges should be enabled (true) or disabled (false)
 # /rankup3 reload will not do anything if this is changed,
 # you will have to restart your server.

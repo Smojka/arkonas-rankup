@@ -156,6 +156,30 @@ public class RankupHelper {
     sendRankupMessages(player, rankElement);
   }
 
+  /**
+   * Ranks a player up a single step without applying or enforcing the manual rankup cooldown, and
+   * reports whether they advanced. Used by auto-max so a pass can chain multiple rankups without
+   * each step's cooldown blocking the next (the manual {@code cooldown} setting is a spam guard for
+   * the {@code /rankup} command, not for automatic progression).
+   *
+   * @param player the player to advance
+   * @return true if the player ranked up, false if they could not (not in a ladder, at the top, or
+   *         requirements unmet)
+   */
+  public boolean rankupOnce(Player player) {
+    if (!checkRankup(player, false)) {
+      return false;
+    }
+
+    RankElement<Rank> rankElement = plugin.getRankups().getByPlayer(player);
+    Rank rank = rankElement.getRank();
+    rank.applyRequirements(player);
+
+    doRankup(player, rankElement);
+    sendRankupMessages(player, rankElement);
+    return true;
+  }
+
   public boolean checkRankup(Player player) {
     return checkRankup(player, true);
   }
