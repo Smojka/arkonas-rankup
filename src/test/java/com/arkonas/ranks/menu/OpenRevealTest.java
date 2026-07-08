@@ -51,4 +51,21 @@ public class OpenRevealTest extends RankupTest {
     server.getScheduler().performTicks(200);
     assertTrue(nonBaseSlots(top, base) > 0, "content should be revealed after the wipe");
   }
+
+  @Test
+  public void clickDuringRevealSnapsGridVisible() {
+    PlayerMock player = server.addPlayer();
+    player.addAttachment(plugin, "rankup.ranks", true);
+    groupProvider.transferGroup(player.getUniqueId(), null, "A");
+
+    server.dispatchCommand(player, "ranks");
+    Inventory top = player.getOpenInventory().getTopInventory();
+    Material base = top.getItem(0).getType();
+    assertEquals(0, nonBaseSlots(top, base), "hidden right after open");
+
+    // a click mid-reveal must snap the grid fully visible (and not fire a hidden action)
+    player.simulateInventoryClick(4);
+
+    assertTrue(nonBaseSlots(top, base) > 0, "click during the reveal reveals the whole grid");
+  }
 }

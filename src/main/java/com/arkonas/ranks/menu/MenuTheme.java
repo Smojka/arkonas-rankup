@@ -103,6 +103,13 @@ public class MenuTheme {
    * fill lined up with its per-step precompute; {@code fraction} drives the smooth sub-cell style.
    */
   public String renderBar(int filledSegments, double fraction) {
+    // the gradient style emits MiniMessage tags, which render literally under message-format:
+    // legacy; degrade to the classic bar there so it never shows raw <gradient> text
+    if ("gradient".equalsIgnoreCase(progressStyle)
+        && plugin.getComponentRenderer()
+            instanceof com.arkonas.ranks.text.LegacyComponentRenderer) {
+      return progressBar.partialBar(filledSegments);
+    }
     return progressBar.styled(progressStyle, filledSegments, fraction,
         progressFrom, progressTo, progressEmpty);
   }

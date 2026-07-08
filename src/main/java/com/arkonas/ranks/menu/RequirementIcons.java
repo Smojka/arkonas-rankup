@@ -27,7 +27,8 @@ public final class RequirementIcons {
           continue;
         }
         MenuIcon icon = MenuIcon.parse(section, key, null);
-        if (icon.material() != null) {
+        // keep namespaced custom-item icons (material is null until the provider resolves them)
+        if (icon.material() != null || icon.itemId() != null) {
           icons.put(key.toLowerCase(), icon);
         }
       }

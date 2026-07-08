@@ -108,7 +108,9 @@ public final class MenuIcon {
         return MenuItems.decorate(resolved, name, lore, glowNow, customModelData);
       }
     }
-    return MenuItems.build(material, name, lore, glowNow, customModelData, headTexture);
+    // a namespaced-only icon (material == null) whose provider is absent falls back to a safe item
+    Material fallback = material != null ? material : Material.PAPER;
+    return MenuItems.build(fallback, name, lore, glowNow, customModelData, headTexture);
   }
 
   private static Material material(String name, Material fallback) {

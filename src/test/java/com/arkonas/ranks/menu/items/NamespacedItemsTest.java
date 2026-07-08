@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.arkonas.ranks.menu.MenuIcon;
+import com.arkonas.ranks.menu.RequirementIcons;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
@@ -81,5 +82,32 @@ class NamespacedItemsTest {
     MenuIcon icon = MenuIcon.parse(config, "icon", Material.BARRIER);
 
     assertEquals(Material.BARRIER, icon.build(null, null, false).getType());
+  }
+
+  @Test
+  void requirementIconKeepsNamespacedEntry() {
+    NamespacedItems registry = new NamespacedItems();
+    registry.register(FAKE);
+    NamespacedItems.setActive(registry);
+
+    YamlConfiguration config = new YamlConfiguration();
+    config.set("default", "PAPER");
+    config.set("money", "test:gem"); // namespaced custom item
+    RequirementIcons icons = new RequirementIcons(config);
+
+    MenuIcon icon = icons.iconFor("money");
+    assertEquals("test:gem", icon.itemId(), "namespaced requirement icon must be retained");
+    assertEquals(Material.DIAMOND, icon.build(null, null, false).getType());
+  }
+
+  @Test
+  void requirementIconNamespacedFallsBackSafely() {
+    // no provider registered: the entry is still kept, and build() never NPEs on a null material
+    YamlConfiguration config = new YamlConfiguration();
+    config.set("money", "test:gem");
+    RequirementIcons icons = new RequirementIcons(config);
+
+    assertEquals("test:gem", icons.iconFor("money").itemId());
+    assertEquals(Material.PAPER, icons.iconFor("money").build(null, null, false).getType());
   }
 }

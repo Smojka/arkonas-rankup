@@ -93,11 +93,17 @@ public class CelebrationEffects {
       return;
     }
     String name = jingle.getString("sound", "block.note_block.pling");
-    Sound parsed = Registry.SOUNDS.get(NamespacedKey.minecraft(name.toLowerCase().replace(' ', '_')));
+    Sound parsed;
+    try {
+      parsed = Registry.SOUNDS.get(NamespacedKey.minecraft(name.toLowerCase().replace(' ', '_')));
+    } catch (Exception e) {
+      parsed = null;
+    }
     if (parsed == null) {
       plugin.getLogger().warning("Unknown jingle sound: " + name);
       return;
     }
+    final Sound sound = parsed;
     int notes = Math.max(1, jingle.getInt("notes", 5));
     double startPitch = jingle.getDouble("start-pitch", 0.8);
     double pitchStep = jingle.getDouble("pitch-step", 0.15);
@@ -108,7 +114,7 @@ public class CelebrationEffects {
       float pitch = (float) Math.max(0.5, Math.min(2.0, startPitch + i * pitchStep));
       long delay = (long) i * interval;
       plugin.getServer().getScheduler().runTaskLater(plugin,
-          () -> player.playSound(player.getLocation(), parsed, volume, pitch), delay);
+          () -> player.playSound(player.getLocation(), sound, volume, pitch), delay);
     }
   }
 

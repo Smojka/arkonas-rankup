@@ -49,6 +49,10 @@ public abstract class AbstractMenu implements InventoryHolder {
   // open-reveal transition state
   private ItemStack[] revealItems;
   private boolean revealing;
+  // frame at which content became fully visible (== openedFrame unless a reveal delayed it);
+  // content animations (e.g. the confirm progress-fill) should key their step off this
+  @Getter
+  private long revealDoneFrame;
 
   protected AbstractMenu(MenuModule module, Player player, AbstractMenu parent, int rows) {
     this.module = module;
@@ -91,6 +95,7 @@ public abstract class AbstractMenu implements InventoryHolder {
   /** Builds the inventory and shows it to the player. */
   public final void open() {
     this.openedFrame = module.currentFrame();
+    this.revealDoneFrame = this.openedFrame;
     this.inventory = Bukkit.createInventory(this, size(), title());
     layout();
     if (module.openReveal()) {
@@ -153,6 +158,7 @@ public abstract class AbstractMenu implements InventoryHolder {
       }
       revealing = false;
       revealItems = null;
+      revealDoneFrame = frame; // content animations key their step off completion
     }
     if (module.borderChase() && ringSlots.length > 0) {
       animateBorder(frame);
@@ -173,6 +179,18 @@ public abstract class AbstractMenu implements InventoryHolder {
       inventory.setItem(slot, revealItems[slot]);
     }
     return revealed < size();
+  }
+
+  /** Snaps the reveal to fully visible (used when the player clicks mid-reveal). */
+  private void finishReveal() {
+    if (revealItems != null) {
+      for (int slot = 0; slot < size() && slot < revealItems.length; slot++) {
+        inventory.setItem(slot, revealItems[slot]);
+      }
+      revealDoneFrame = module.currentFrame();
+    }
+    revealing = false;
+    revealItems = null;
   }
 
   private void animateBorder(long frame) {
@@ -221,6 +239,12 @@ public abstract class AbstractMenu implements InventoryHolder {
   }
 
   final void onClick(int slot, ClickType click) {
+    // a click during the reveal snaps the grid fully visible and is otherwise swallowed, so a
+    // click on a not-yet-revealed slot can never fire a hidden confirm/nav action
+    if (revealing) {
+      finishReveal();
+      return;
+    }
     if (slot == closeSlot) {
       theme.playSound(player, "click");
       defer(player::closeInventory);
