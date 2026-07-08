@@ -39,6 +39,7 @@ public class StatsService implements AutoCloseable {
   private volatile List<LeaderboardEntry> topRankups = List.of();
   private volatile List<LeaderboardEntry> topPrestiges = List.of();
   private final Map<UUID, int[]> countsCache = new ConcurrentHashMap<>();
+  private volatile MilestoneHook milestoneHook;
 
   public StatsService(Logger logger, File dataFolder, ConfigurationSection database)
       throws SQLException {
@@ -122,6 +123,19 @@ public class StatsService implements AutoCloseable {
           players.executeUpdate();
         }
         countsCache.remove(record.uuid());
+
+        // notify the milestone hook with the just-written totals (same stats thread, so no race)
+        MilestoneHook hook = this.milestoneHook;
+        if (hook != null) {
+          try (PreparedStatement counts = connection.prepareStatement(
+              "SELECT rankup_count, prestige_count FROM ar_players WHERE uuid = ?")) {
+            counts.setString(1, record.uuid().toString());
+            ResultSet result = counts.executeQuery();
+            if (result.next()) {
+              hook.onRecord(record, result.getInt(1), result.getInt(2));
+            }
+          }
+        }
       } catch (SQLException e) {
         logger.log(Level.SEVERE, "Failed to record rankup stats", e);
       }
@@ -129,6 +143,11 @@ public class StatsService implements AutoCloseable {
       // leaderboard query must not run while the write connection is still open
       refreshLeaderboardsNow();
     });
+  }
+
+  /** Registers a hook notified after each recorded rankup/prestige with the fresh totals. */
+  public void setMilestoneHook(MilestoneHook hook) {
+    this.milestoneHook = hook;
   }
 
   /** Asynchronously fetches the top list and hands it back on the stats thread. */

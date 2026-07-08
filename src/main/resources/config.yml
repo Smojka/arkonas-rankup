@@ -270,3 +270,24 @@ progress-display:
   actionbar:
     enabled: false
     text: '&7Progress to %next%: &e%percent%%'
+
+# Milestone rewards (optional, needs database.enabled). Runs console commands when
+# a player's cumulative rankup / prestige count reaches a milestone. A specific
+# count in 'at' takes precedence over the 'every N' cadence. Placeholders in the
+# commands: %player%, %count%, %type%.
+milestones:
+  enabled: false
+  rankup:
+    # reward every N rankups (0 = off)
+    every: 25
+    every-commands:
+      - 'broadcast &e%player% &7reached &a%count% &7rankups!'
+    # specific milestone counts -> commands
+    at:
+      100:
+        - 'give %player% diamond 16'
+        - 'broadcast &6%player% &7hit &b100 rankups&7!'
+  prestige:
+    every: 0
+    every-commands: []
+    at: {}

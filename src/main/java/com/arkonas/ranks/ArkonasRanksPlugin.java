@@ -122,6 +122,8 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   @Getter
   private com.arkonas.ranks.progress.ProgressDisplay progressDisplay;
   @Getter
+  private com.arkonas.ranks.milestone.MilestoneService milestones;
+  @Getter
   private Placeholders placeholders;
   @Getter
   private RankupHelper helper;
@@ -245,6 +247,12 @@ public class ArkonasRanksPlugin extends JavaPlugin {
             config.getConfigurationSection("database"));
         getServer().getPluginManager().registerEvents(
             new com.arkonas.ranks.data.StatsListener(stats), this);
+        // milestone rewards ride on the stats counts (needs the database enabled)
+        milestones = com.arkonas.ranks.milestone.MilestoneService.fromConfig(
+            this, config.getConfigurationSection("milestones"));
+        if (milestones.isEnabled()) {
+          stats.setMilestoneHook(milestones);
+        }
       } catch (Exception e) {
         getLogger().log(java.util.logging.Level.SEVERE,
             "Could not initialise the statistics database; /rankup top and"
