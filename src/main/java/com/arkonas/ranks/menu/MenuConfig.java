@@ -59,6 +59,19 @@ public class MenuConfig {
     return animation != null && animation.getBoolean(key, true);
   }
 
+  /** Animation flag with an explicit default (for opt-in flags like open-reveal). */
+  public boolean animationFlag(String key, boolean def) {
+    ConfigurationSection animation = animation();
+    return animation == null ? def : animation.getBoolean(key, def);
+  }
+
+  /** Slots revealed per frame by the open-reveal transition. */
+  public int openRevealSpeed() {
+    ConfigurationSection animation = animation();
+    int speed = animation == null ? 6 : animation.getInt("open-reveal-speed", 6);
+    return Math.max(1, speed);
+  }
+
   public int rows(String menu, int def) {
     ConfigurationSection section = menu(menu);
     return section == null ? def : section.getInt("rows", def);

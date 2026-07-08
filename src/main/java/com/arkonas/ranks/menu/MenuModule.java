@@ -102,6 +102,15 @@ public class MenuModule {
     return config.animationEnabled() && config.animationFlag("cooldown-countdown");
   }
 
+  /** Open-reveal transition — opt-in (default off), so parity/existing menus are unchanged. */
+  public boolean openReveal() {
+    return config.animationEnabled() && config.animationFlag("open-reveal", false);
+  }
+
+  public int openRevealSpeed() {
+    return config.openRevealSpeed();
+  }
+
   // --- factories ------------------------------------------------------------
 
   public void openHub(Player player) {

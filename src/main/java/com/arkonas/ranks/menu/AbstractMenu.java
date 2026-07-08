@@ -46,6 +46,10 @@ public abstract class AbstractMenu implements InventoryHolder {
   private int homeSlot = -1;
   private int closeSlot = -1;
 
+  // open-reveal transition state
+  private ItemStack[] revealItems;
+  private boolean revealing;
+
   protected AbstractMenu(MenuModule module, Player player, AbstractMenu parent, int rows) {
     this.module = module;
     this.plugin = module.getPlugin();
@@ -89,6 +93,14 @@ public abstract class AbstractMenu implements InventoryHolder {
     this.openedFrame = module.currentFrame();
     this.inventory = Bukkit.createInventory(this, size(), title());
     layout();
+    if (module.openReveal()) {
+      // snapshot the built grid, then blank the inventory so the ticker can wipe it in
+      this.revealItems = inventory.getContents().clone();
+      this.revealing = true;
+      for (int slot = 0; slot < size(); slot++) {
+        inventory.setItem(slot, theme.borderBase());
+      }
+    }
     module.register(this);
     player.openInventory(inventory);
     theme.playSound(player, "open");
@@ -102,6 +114,9 @@ public abstract class AbstractMenu implements InventoryHolder {
     if (inventory == null) {
       return;
     }
+    // an explicit state refresh cancels any in-progress reveal and shows the fresh grid now
+    revealing = false;
+    revealItems = null;
     inventory.clear();
     layout();
   }
@@ -131,10 +146,33 @@ public abstract class AbstractMenu implements InventoryHolder {
 
   /** Called by the ticker each frame while this menu is open. */
   final void tick(long frame) {
+    if (revealing) {
+      // reveal owns the whole grid until complete, so border-chase/fill start only after
+      if (advanceReveal(frame)) {
+        return;
+      }
+      revealing = false;
+      revealItems = null;
+    }
     if (module.borderChase() && ringSlots.length > 0) {
       animateBorder(frame);
     }
     onTick(frame);
+  }
+
+  /**
+   * Reveals the pre-built grid one row-major band per frame. Only sets the newly revealed slots to
+   * their final (pre-built) items; already-revealed slots are untouched and not-yet-revealed slots
+   * keep the base pane placed at {@link #open()}. Returns true while the reveal is still running.
+   */
+  private boolean advanceReveal(long frame) {
+    int speed = Math.max(1, module.openRevealSpeed());
+    long elapsed = frame - openedFrame; // first tick after open() = 1
+    int revealed = (int) Math.min(size(), Math.max(0, elapsed) * speed);
+    for (int slot = 0; slot < revealed; slot++) {
+      inventory.setItem(slot, revealItems[slot]);
+    }
+    return revealed < size();
   }
 
   private void animateBorder(long frame) {

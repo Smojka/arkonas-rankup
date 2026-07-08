@@ -15,14 +15,12 @@
 animation:
   enabled: true
   period: 2
-  border-chase: true
+  border-chase: false
   progress-fill: true
   confirm-pulse: true
   cooldown-countdown: true
-  # open-reveal: wipe the menu in when it opens (off by default). speed = slots
-  # revealed per frame.
-  open-reveal: false
-  open-reveal-speed: 6
+  open-reveal: true
+  open-reveal-speed: 1
 
 theme:
   # gradient endpoints used for menu titles and accents
