@@ -234,3 +234,14 @@ rebirth:
     requirements-not-met: '&cYou do not meet the requirements to be reborn.'
     not-at-top: '&cYou must reach the top of your progression before you can be reborn.'
     maxed: '&cYou have reached the maximum rebirth.'
+
+# Cost multipliers (optional). Scales the money requirement of every rankup.
+# A factor below 1 is a discount, above 1 a surcharge. The effective factor is
+# global * (best permission factor the player has) * (active event booster).
+# Placeholders and menus reflect the discounted cost, and the deduction matches.
+multipliers:
+  global: 1.0
+  # permission node -> factor; the player's lowest matching factor (best discount) wins
+  permissions:
+    rankup.multiplier.vip: 0.9
+    rankup.multiplier.mvp: 0.8

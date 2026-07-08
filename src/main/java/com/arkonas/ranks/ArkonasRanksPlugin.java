@@ -118,6 +118,8 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   @Getter
   private com.arkonas.ranks.rebirth.RebirthManager rebirth;
   @Getter
+  private com.arkonas.ranks.multiplier.MultiplierService multipliers;
+  @Getter
   private Placeholders placeholders;
   @Getter
   private RankupHelper helper;
@@ -423,6 +425,9 @@ public class ArkonasRanksPlugin extends JavaPlugin {
 
       rebirth = com.arkonas.ranks.rebirth.RebirthManager.fromConfig(
           this, getConfig().getConfigurationSection("rebirth"));
+
+      multipliers = com.arkonas.ranks.multiplier.MultiplierService.fromConfig(
+          getConfig().getConfigurationSection("multipliers"));
 
 
     } catch (RuntimeException e) {

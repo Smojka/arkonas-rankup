@@ -22,6 +22,15 @@ public class MoneyDeductibleRequirement extends MoneyRequirement implements Dedu
     economy.withdrawPlayer(player, getValueDouble() * multiplier);
   }
 
+  /**
+   * Deducts the effective cost, applying the player's cost multiplier so the amount withdrawn
+   * matches {@link #getTotal(Player)} shown in menus and placeholders.
+   */
+  @Override
+  public void apply(Player player) {
+    apply(player, costFactor(player));
+  }
+
   @Override
   public Requirement clone() {
     return new MoneyDeductibleRequirement(this);
