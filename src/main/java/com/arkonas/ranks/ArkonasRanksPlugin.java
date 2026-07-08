@@ -77,6 +77,8 @@ import com.arkonas.ranks.requirements.requirement.towny.TownyResidentRequirement
 import com.arkonas.ranks.requirements.requirement.votingplugin.VotingPluginPointsDeductibleRequirement;
 import com.arkonas.ranks.requirements.requirement.votingplugin.VotingPluginPointsRequirement;
 import com.arkonas.ranks.requirements.requirement.votingplugin.VotingPluginVotesRequirement;
+import com.arkonas.ranks.formula.CostFormula;
+import com.arkonas.ranks.formula.CostFormulaExpander;
 import com.arkonas.ranks.serialization.RankSerialized;
 import com.arkonas.ranks.serialization.ShadowDeserializer;
 import com.arkonas.ranks.serialization.YamlDeserializer;
@@ -396,7 +398,10 @@ public class ArkonasRanksPlugin extends JavaPlugin {
         prestiges = null;
       }
 
-      rankups = new Rankups(this, loadRankupConfig("rankups"));
+      List<RankSerialized> rankupConfig = loadRankupConfig("rankups");
+      CostFormula costFormula = CostFormula.fromConfig(getConfig().getConfigurationSection("cost-formula"));
+      rankupConfig = CostFormulaExpander.expand(costFormula, rankupConfig);
+      rankups = new Rankups(this, rankupConfig);
       // check rankups are not in an infinite loop
 //      rankups.getOrderedList();
 

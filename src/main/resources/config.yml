@@ -158,3 +158,23 @@ database:
 # configured in menus.yml.
 menus:
   enabled: true
+
+# Cost formula (optional). Instead of hand-writing a requirement on every rank,
+# generate one from a formula based on the rank's position in the ladder.
+# Ranks that already declare the requirement keep their explicit value unless
+# override is true. Ranks using prestige-style requirement maps are never touched.
+# Variables available in the expression:
+#   {index} - 0-based position of the rank in the ladder (first rank = 0)
+#   {n}     - total number of ranks in the ladder
+#   {prev}  - the cost generated for the previous rank (0 for the first)
+# Operators: + - * / % ^   Functions: min max pow floor ceil round abs sqrt
+cost-formula:
+  enabled: false
+  # the requirement name to generate (money, xp-level, tokenmanager-tokens, ...)
+  requirement: money
+  # e.g. exponential scaling: first rank 1000, each rank 15% dearer
+  expression: "1000 * 1.15 ^ {index}"
+  # decimal places to round to (-1 to disable rounding)
+  round: 2
+  # true = replace an explicit requirement of the same name; false = only fill ranks without one
+  override: false
