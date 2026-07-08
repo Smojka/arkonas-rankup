@@ -189,3 +189,21 @@ cost-formula:
   round: 2
   # true = replace an explicit requirement of the same name; false = only fill ranks without one
   override: false
+
+# Multiple ladders (optional). rankups.yml is always the "default" ladder. To add
+# parallel ladders a player progresses on independently (e.g. a mining track and a
+# combat track), drop extra files in a `ladders/` folder next to this config, one
+# file per ladder using the same format as rankups.yml (yaml or toml). The file name
+# is the ladder id. Players use `/rankup <ladder>` and `/maxrankup <ladder>`; auto
+# rankup advances every ladder. `/rankup` with no argument, the menu and prestige all
+# stay on the default ladder.
+# A ladder may have its own cost formula here; otherwise the global cost-formula above
+# is used:
+# ladders:
+#   mining:
+#     cost-formula:
+#       enabled: true
+#       requirement: money
+#       expression: "500 * 1.2 ^ {index}"
+#       round: 2
+#       override: false

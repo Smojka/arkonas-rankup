@@ -86,11 +86,20 @@ Model:
 - Leaderboards keyed by `(ladder, type)`; placeholders gain `%rankup_<ladder>_...%` forms;
   bare forms resolve against default.
 
-Back-compat: no `ladders/` dir → behaves exactly as today. Menu module: hub lists ladders when
->1 exists, else opens the single ladder directly.
+Back-compat: no `ladders/` dir → behaves exactly as today.
 
 Tests: two-ladder fixture — independent current-rank per ladder, rankup on one doesn't move the
-other, unknown ladder arg errors cleanly, default-only config unchanged.
+other, command routing, default-only config unchanged.
+
+**Shipped (M3):** `LadderRegistry`, `ladders/` loading (yaml/toml, toml wins, reserved
+`default`), per-ladder cost-formula, helper ladder overloads (`checkRankup/rankup/rankupOnce`),
+`/rankup <ladder>` + `/maxrankup <ladder>` routing (menu wrapper passes named ladders to parity),
+auto rankup across all ladders, ladder tab-completion.
+
+**Deferred to M3b** (follow-up, not blocking): menu-module ladder picker (hub lists ladders),
+multi-ladder leaderboards (`stats` keyed by ladder), `%rankup_<ladder>_*%` placeholders, and a
+per-ladder confirmation screen. Named ladders currently rank up directly (requirements still
+enforced); the menu/confirm flow stays on the default ladder.
 
 ---
 

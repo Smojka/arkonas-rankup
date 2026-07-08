@@ -112,6 +112,8 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   @Getter
   private Rankups rankups;
   @Getter
+  private com.arkonas.ranks.ladder.LadderRegistry ladders;
+  @Getter
   private Prestiges prestiges;
   @Getter
   private Placeholders placeholders;
@@ -213,12 +215,15 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     }
     if (config.getBoolean("max-rankup.enabled")) {
       getCommand("maxrankup").setExecutor(new MaxRankupCommand(this));
+      getCommand("maxrankup").setTabCompleter(new com.arkonas.ranks.commands.LadderTabCompleter(this));
     }
 
     RankupCommand rankupParity = new RankupCommand(this);
     getCommand("rankup").setExecutor(menus
         ? new com.arkonas.ranks.menu.commands.MenuRankupCommand(this, menuModule, rankupParity)
         : rankupParity);
+    getCommand("rankup").setTabCompleter(
+        new com.arkonas.ranks.commands.LadderTabCompleter(this, "noconfirm", "top", "gui"));
     getCommand("arkonasranks").setExecutor(new InfoCommand(this, notifier));
     effectsListener = new com.arkonas.ranks.effects.EffectsListener(this);
     getServer().getPluginManager().registerEvents(effectsListener, this);
@@ -405,6 +410,10 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       // check rankups are not in an infinite loop
 //      rankups.getOrderedList();
 
+      ladders = new com.arkonas.ranks.ladder.LadderRegistry();
+      ladders.put(com.arkonas.ranks.ladder.LadderRegistry.DEFAULT, rankups);
+      loadExtraLadders();
+
 
     } catch (RuntimeException e) {
       this.errorMessage = e.getClass().getName() + ": " + e.getMessage();
@@ -445,6 +454,69 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       saveResource(ymlFile.getName(), false);
     }
     return YamlDeserializer.deserialize(YamlConfiguration.loadConfiguration(ymlFile));
+  }
+
+  /**
+   * Loads any additional rankup ladders from files in the {@code ladders/} folder into the ladder
+   * registry. Each file (yaml or toml, toml winning on a name clash) becomes a ladder keyed by its
+   * file name; the reserved id {@code default} is skipped. A per-ladder cost formula may be set at
+   * {@code ladders.<id>.cost-formula} in config.yml, otherwise the global {@code cost-formula}
+   * applies. A single malformed ladder is logged and skipped, never aborting startup.
+   */
+  private void loadExtraLadders() {
+    File dir = new File(getDataFolder(), "ladders");
+    if (!dir.isDirectory()) {
+      return;
+    }
+    File[] files = dir.listFiles((d, fileName) -> {
+      String lower = fileName.toLowerCase();
+      return lower.endsWith(".yml") || lower.endsWith(".toml");
+    });
+    if (files == null || files.length == 0) {
+      return;
+    }
+
+    java.util.Map<String, File> ymlById = new java.util.HashMap<>();
+    java.util.Map<String, File> tomlById = new java.util.HashMap<>();
+    for (File file : files) {
+      String name = file.getName();
+      String lower = name.toLowerCase();
+      String id = lower.replaceAll("\\.(yml|toml)$", "");
+      if (id.equals(com.arkonas.ranks.ladder.LadderRegistry.DEFAULT)) {
+        getLogger().warning("Ignoring ladders/" + name
+            + ": the id 'default' is reserved for rankups.yml");
+        continue;
+      }
+      (lower.endsWith(".toml") ? tomlById : ymlById).put(id, file);
+    }
+
+    java.util.Set<String> ids = new java.util.TreeSet<>();
+    ids.addAll(ymlById.keySet());
+    ids.addAll(tomlById.keySet());
+    for (String id : ids) {
+      File file = tomlById.getOrDefault(id, ymlById.get(id));
+      try {
+        List<RankSerialized> cfg = loadLadderFile(file);
+        org.bukkit.configuration.ConfigurationSection ladderFormula =
+            getConfig().getConfigurationSection("ladders." + id + ".cost-formula");
+        CostFormula formula = CostFormula.fromConfig(ladderFormula != null ? ladderFormula
+            : getConfig().getConfigurationSection("cost-formula"));
+        cfg = CostFormulaExpander.expand(formula, cfg);
+        ladders.put(id, new Rankups(this, cfg));
+        getLogger().info("Loaded rankup ladder '" + id + "' (" + cfg.size() + " ranks).");
+      } catch (Exception e) {
+        getLogger().log(java.util.logging.Level.SEVERE,
+            "Failed to load ladder file " + file.getName() + "; skipping it", e);
+      }
+    }
+  }
+
+  private List<RankSerialized> loadLadderFile(File file) throws FileNotFoundException {
+    if (file.getName().toLowerCase().endsWith(".toml")) {
+      return ShadowDeserializer.deserialize(
+          TomlFormat.instance().createParser().parse(new FileReader(file)));
+    }
+    return YamlDeserializer.deserialize(YamlConfiguration.loadConfiguration(file));
   }
 
   private FileConfiguration loadConfig(String name) {

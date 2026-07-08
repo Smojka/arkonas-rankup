@@ -41,6 +41,13 @@ public class MenuRankupCommand implements CommandExecutor {
       return true;
     }
 
+    // a named extra ladder bypasses the menu and uses the parity ladder routing
+    if (args.length > 0 && plugin.getLadders() != null
+        && !args[0].equalsIgnoreCase(com.arkonas.ranks.ladder.LadderRegistry.DEFAULT)
+        && plugin.getLadders().has(args[0])) {
+      return parity.onCommand(sender, command, label, args);
+    }
+
     if (args.length > 0 && args[0].equalsIgnoreCase("top")) {
       if (!player.hasPermission("rankup.top")) {
         return true;

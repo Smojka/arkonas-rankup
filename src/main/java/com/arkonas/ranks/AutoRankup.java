@@ -37,6 +37,10 @@ public class AutoRankup extends BukkitRunnable {
     boolean doMax = auto != null && auto.getBoolean("max", false);
 
     RankupHelper helper = rankup.getHelper();
+    java.util.Collection<com.arkonas.ranks.ranks.Rankups> ladders =
+        rankup.getLadders() != null ? rankup.getLadders().all()
+            : java.util.Collections.singletonList(rankup.getRankups());
+
     for (Player player : Bukkit.getOnlinePlayers()) {
       if (!player.hasPermission("rankup.auto")) {
         continue;
@@ -44,20 +48,24 @@ public class AutoRankup extends BukkitRunnable {
 
       boolean rankedThisPass = false;
       if (doRankup) {
-        if (doMax) {
-          int guard = 0;
-          while (helper.rankupOnce(player)) {
-            rankedThisPass = true;
-            if (++guard >= MAX_ITERATIONS) {
-              break;
+        // each ladder is progressed independently
+        for (com.arkonas.ranks.ranks.Rankups ladder : ladders) {
+          if (doMax) {
+            int guard = 0;
+            while (helper.rankupOnce(player, ladder)) {
+              rankedThisPass = true;
+              if (++guard >= MAX_ITERATIONS) {
+                break;
+              }
             }
+          } else if (helper.checkRankup(player, ladder, false)) {
+            helper.rankup(player, ladder);
+            rankedThisPass = true;
           }
-        } else if (helper.checkRankup(player, false)) {
-          helper.rankup(player);
-          rankedThisPass = true;
         }
       }
 
+      // prestige is a single global track, checked once when no ladder advanced
       if (!rankedThisPass && doPrestige && rankup.getPrestiges() != null
           && helper.checkPrestige(player, false)) {
         helper.prestige(player);
