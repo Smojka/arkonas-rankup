@@ -25,7 +25,11 @@ public final class QuestsCompletion {
   private final Object questsPlugin;
   private final Method getQuester;
   private final Method getCompletedQuests;
-  private volatile Method idGetter; // resolved from the first quest element seen
+  // both getters are resolved from the first quest element seen; a quest is matchable by either its
+  // id or its display name (they commonly differ on modern Quests)
+  private volatile boolean gettersResolved;
+  private volatile Method idGetter;
+  private volatile Method nameGetter;
 
   private QuestsCompletion(boolean available, Object questsPlugin, Method getQuester,
       Method getCompletedQuests) {
@@ -71,10 +75,7 @@ public final class QuestsCompletion {
       Set<String> ids = new HashSet<>();
       if (completed instanceof Iterable<?> iterable) {
         for (Object element : iterable) {
-          String id = idOf(element);
-          if (id != null) {
-            ids.add(id.toLowerCase(Locale.ROOT));
-          }
+          collectIds(element, ids);
         }
       }
       return ids;
@@ -83,34 +84,54 @@ public final class QuestsCompletion {
     }
   }
 
-  private String idOf(Object element) {
+  /** Adds every identifier of a completed-quest element (its id and its display name) to the set. */
+  private void collectIds(Object element, Set<String> ids) {
     if (element == null) {
-      return null;
+      return;
     }
     if (element instanceof String string) {
-      return string;
+      add(ids, string);
+      return;
     }
-    try {
-      Method getter = idGetter;
-      if (getter == null) {
-        getter = resolveIdGetter(element.getClass());
-        idGetter = getter;
-      }
-      return getter == null ? String.valueOf(element) : String.valueOf(getter.invoke(element));
-    } catch (Throwable t) {
-      return null;
+    if (!gettersResolved) {
+      idGetter = getterOrNull(element.getClass(), "getId");
+      nameGetter = getterOrNull(element.getClass(), "getName");
+      gettersResolved = true;
+    }
+    boolean any = invokeAdd(ids, idGetter, element) | invokeAdd(ids, nameGetter, element);
+    if (!any) {
+      add(ids, String.valueOf(element)); // last resort so at least something is matchable
     }
   }
 
-  private static Method resolveIdGetter(Class<?> type) {
-    for (String name : new String[] {"getId", "getName"}) {
-      try {
-        return type.getMethod(name);
-      } catch (NoSuchMethodException ignored) {
-        // try the next candidate
-      }
+  private static boolean invokeAdd(Set<String> ids, Method getter, Object element) {
+    if (getter == null) {
+      return false;
     }
-    return null;
+    try {
+      Object value = getter.invoke(element);
+      if (value != null) {
+        add(ids, String.valueOf(value));
+        return true;
+      }
+    } catch (Throwable ignored) {
+      // ignore an unusable getter
+    }
+    return false;
+  }
+
+  private static void add(Set<String> ids, String value) {
+    if (value != null && !value.isBlank()) {
+      ids.add(value.toLowerCase(Locale.ROOT));
+    }
+  }
+
+  private static Method getterOrNull(Class<?> type, String name) {
+    try {
+      return type.getMethod(name);
+    } catch (NoSuchMethodException e) {
+      return null;
+    }
   }
 
   private static Method findMethod(Class<?> type, String name, Class<?>... params) {
