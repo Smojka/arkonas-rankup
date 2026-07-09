@@ -62,3 +62,25 @@ reflection hooks, then a final review + build.
 - Menu page-turn slide + shimmer icons (extra animation flags on the existing ticker).
 - Native auto-spawned/refreshed leaderboard hologram (DecentHolograms API).
 These are polish on top of already-working features; deferred pending live-client validation.
+
+## Adversarial review (13-agent workflow) — 7 confirmed, dispositions
+
+**Fixed (commit after the review):**
+- HIGH — `RebirthManager.resetPrestige` NPE on Vault/LuckPerms (null transfer target) → added
+  `GroupProvider.removeGroup` (remove-only).
+- MEDIUM — currency deductibles crashed on a non-integer configured cost (`getValueInt` vs the
+  double affordability check) → round `getValueDouble` in PlayerPoints/Tokens/VotingPlugin/XpLevel.
+- LOW — progress-display boss bars/sidebars leaked on disable/reload → `onDisable` clears them.
+- LOW — scoreboard showed red score integers → Paper `numberFormat(blank)`.
+
+**Known limitations (verified real, gated behind anti-pattern / unrealistic states — documented, not
+code-changed):**
+- MEDIUM — the reflection requirement adapters (WorldGuard/Quests/PlayerPoints/BetonQuest) cache
+  their handle in a static field; a **runtime `/reload` of the soft-dependency** (a widely
+  discouraged op that already breaks many plugins) leaves a stale handle until a server restart. A
+  normal start/stop is unaffected.
+- LOW — the hub **Rankup** button stays on the primary ladder (documented parity; the Path→picker
+  flow is the ladder-aware route). Reachable only by a player who is on a non-default ladder but has
+  no rank on the default ladder.
+- LOW — `LadderPickerMenu` shows up to 21 ladders without pagination; beyond that use
+  `/rankup <id>`. Only relevant with 22+ configured ladders.
