@@ -14,11 +14,23 @@ public class RankRequirementsFactory {
   private static final String REQUIREMENTS = "requirements";
 
   public static RankRequirements getRequirements(ArkonasRanksPlugin plugin, ConfigurationSection section) {
+    double perRankFactor = section.getDouble("cost-multiplier", 1.0);
     if (section.isConfigurationSection(REQUIREMENTS)) {
-      return getPrestigeListRequirements(plugin, section.getConfigurationSection(REQUIREMENTS));
+      return applyFactor(
+          getPrestigeListRequirements(plugin, section.getConfigurationSection(REQUIREMENTS)),
+          perRankFactor);
     } else {
-      return getListRequirements(plugin, getRequirementStrings(section, REQUIREMENTS));
+      return applyFactor(
+          getListRequirements(plugin, getRequirementStrings(section, REQUIREMENTS)), perRankFactor);
     }
+  }
+
+  /** Stamps a per-rank cost multiplier onto every requirement built for the rank. */
+  private static RankRequirements applyFactor(RankRequirements requirements, double perRankFactor) {
+    if (requirements != null && perRankFactor != 1.0) {
+      requirements.setPerRankFactor(perRankFactor);
+    }
+    return requirements;
   }
 
   public static RankRequirements getRequirements(ArkonasRanksPlugin plugin, List<String> requirements,

@@ -12,6 +12,7 @@ public abstract class Requirement implements Cloneable {
   @Getter
   private String sub;
   private boolean subRequirement;
+  private double perRankFactor = 1.0;
 
   public Requirement(ArkonasRanksPlugin plugin, String name) {
     this(plugin, name, false);
@@ -29,6 +30,12 @@ public abstract class Requirement implements Cloneable {
     this.value = clone.value;
     this.sub = clone.sub;
     this.subRequirement = clone.subRequirement;
+    this.perRankFactor = clone.perRankFactor;
+  }
+
+  /** Per-rank cost multiplier from the rank's {@code cost-multiplier} config key (default 1.0). */
+  public void setPerRankFactor(double perRankFactor) {
+    this.perRankFactor = perRankFactor;
   }
 
   public void setValue(String value) {
@@ -102,7 +109,8 @@ public abstract class Requirement implements Cloneable {
    * apply uniformly across money, XP, tokens and vote points.
    */
   protected double costFactor(Player player) {
-    return plugin.getMultipliers() == null ? 1.0 : plugin.getMultipliers().costFactor(player);
+    double global = plugin.getMultipliers() == null ? 1.0 : plugin.getMultipliers().costFactor(player);
+    return global * perRankFactor;
   }
 
   public abstract Requirement clone();

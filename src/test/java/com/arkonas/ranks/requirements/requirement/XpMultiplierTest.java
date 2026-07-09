@@ -33,6 +33,21 @@ class XpMultiplierTest extends RankupTest {
   }
 
   @Test
+  void perRankFactorStacksWithSale() {
+    XpLevelDeductibleRequirement requirement = new XpLevelDeductibleRequirement(plugin, "xp-level");
+    requirement.setValue("10");
+    requirement.setPerRankFactor(0.5); // this rank costs half
+    PlayerMock player = server.addPlayer();
+    player.setLevel(40);
+
+    assertEquals(5.0, requirement.getTotal(player)); // 10 * 0.5 per-rank
+
+    // a 50% sale stacks on top of the per-rank factor
+    plugin.getMultipliers().setEventMultiplier(0.5, System.currentTimeMillis() + 3_600_000L);
+    assertEquals(2.5, requirement.getTotal(player)); // 10 * 0.5 * 0.5
+  }
+
+  @Test
   void neutralMultiplierLeavesCostUnchanged() {
     XpLevelDeductibleRequirement requirement = new XpLevelDeductibleRequirement(plugin, "xp-level");
     requirement.setValue("8");

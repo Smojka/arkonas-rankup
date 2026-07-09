@@ -42,6 +42,14 @@ public class PrestigeListRankRequirements implements RankRequirements {
     getRankRequirements(player).applyRequirements(player);
   }
 
+  @Override
+  public void setPerRankFactor(double factor) {
+    defaultRequirements.setPerRankFactor(factor);
+    for (RankRequirements rankRequirements : requirements.values()) {
+      rankRequirements.setPerRankFactor(factor);
+    }
+  }
+
   private RankRequirements getRankRequirements(Player player) {
     Prestiges prestiges = plugin.getPrestiges();
     if (player == null || prestiges == null) {
