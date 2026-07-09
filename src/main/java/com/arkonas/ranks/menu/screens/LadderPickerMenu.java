@@ -1,5 +1,6 @@
 package com.arkonas.ranks.menu.screens;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,15 +38,30 @@ public class LadderPickerMenu extends AbstractMenu {
     slotToLadder.clear();
     LadderRegistry ladders = plugin.getLadders();
     if (ladders != null) {
-      int slot = 10;
+      List<Integer> grid = interiorSlots();
+      int i = 0;
       for (String id : ladders.ids()) {
+        if (i >= grid.size()) {
+          break; // more ladders than interior slots (very rare); the rest are unreachable here
+        }
+        int slot = grid.get(i++);
         setItem(slot, ladderButton(id));
         slotToLadder.put(slot, id);
-        // step across the interior 7-wide band, wrapping to the next row's first inner slot
-        slot = (slot % 9 == 7) ? slot + 3 : slot + 1;
       }
     }
     placeNav(true, true, true);
+  }
+
+  /** The 7-wide interior band (rows 1..rows-2, cols 1..7), never the border or the nav row. */
+  private List<Integer> interiorSlots() {
+    int rows = size() / 9;
+    List<Integer> slots = new ArrayList<>();
+    for (int r = 1; r <= rows - 2; r++) {
+      for (int c = 1; c <= 7; c++) {
+        slots.add(r * 9 + c);
+      }
+    }
+    return slots;
   }
 
   private ItemStack ladderButton(String id) {
