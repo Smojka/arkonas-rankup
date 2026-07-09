@@ -6,6 +6,7 @@ import com.arkonas.ranks.menu.AbstractMenu;
 import com.arkonas.ranks.menu.MenuModule;
 import com.arkonas.ranks.ranks.Rank;
 import com.arkonas.ranks.ranks.RankElement;
+import com.arkonas.ranks.ranks.Rankups;
 import com.arkonas.ranks.requirements.Requirement;
 
 /**
@@ -15,12 +16,19 @@ import com.arkonas.ranks.requirements.Requirement;
  */
 public class RankupMenu extends ConfirmScreen {
 
+  private final Rankups ladder;
+
   public RankupMenu(MenuModule module, Player player, AbstractMenu parent) {
+    this(module, player, parent, null);
+  }
+
+  public RankupMenu(MenuModule module, Player player, AbstractMenu parent, Rankups ladder) {
     super(module, player, parent, module.getConfig().rows("rankup", 5));
+    this.ladder = ladder != null ? ladder : plugin.getRankups();
   }
 
   private RankElement<Rank> element() {
-    return plugin.getRankups() == null ? null : plugin.getRankups().getByPlayer(player);
+    return ladder == null ? null : ladder.getByPlayer(player);
   }
 
   @Override
@@ -63,6 +71,6 @@ public class RankupMenu extends ConfirmScreen {
 
   @Override
   protected void performConfirm() {
-    plugin.getHelper().rankup(player);
+    plugin.getHelper().rankup(player, ladder);
   }
 }

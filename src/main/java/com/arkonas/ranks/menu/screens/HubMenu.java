@@ -68,7 +68,10 @@ public class HubMenu extends AbstractMenu {
   protected void handleClick(int slot, ClickType click) {
     if (slot == pathSlot) {
       theme.playSound(player, "click");
-      defer(() -> new RankPathMenu(module, player, this).open());
+      boolean multi = plugin.getLadders() != null && plugin.getLadders().hasMultiple();
+      AbstractMenu next = multi ? new LadderPickerMenu(module, player, this)
+          : new RankPathMenu(module, player, this);
+      defer(next::open);
     } else if (slot == rankupSlot) {
       theme.playSound(player, "click");
       defer(() -> new RankupMenu(module, player, this).open());

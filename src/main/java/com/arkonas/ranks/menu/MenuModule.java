@@ -6,6 +6,7 @@ import lombok.Getter;
 import org.bukkit.entity.Player;
 import com.arkonas.ranks.ArkonasRanksPlugin;
 import com.arkonas.ranks.menu.screens.HubMenu;
+import com.arkonas.ranks.menu.screens.LadderPickerMenu;
 import com.arkonas.ranks.menu.screens.LeaderboardMenu;
 import com.arkonas.ranks.menu.screens.PrestigeListMenu;
 import com.arkonas.ranks.menu.screens.PrestigeMenu;
@@ -122,7 +123,16 @@ public class MenuModule {
   }
 
   public void openRankPath(Player player) {
-    new RankPathMenu(this, player, null).open();
+    // multi-ladder servers get a ladder picker; single-ladder servers go straight to the path
+    if (plugin.getLadders() != null && plugin.getLadders().hasMultiple()) {
+      new LadderPickerMenu(this, player, null).open();
+    } else {
+      new RankPathMenu(this, player, null).open();
+    }
+  }
+
+  public void openLadderPicker(Player player) {
+    new LadderPickerMenu(this, player, null).open();
   }
 
   public void openPrestige(Player player) {

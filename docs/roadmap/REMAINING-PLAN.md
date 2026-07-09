@@ -37,3 +37,28 @@ reflection hooks, then a final review + build.
 ## Batch D — finalise
 13. Multi-agent adversarial review over all new reflection/runtime diffs; fix confirmed findings.
 14. Full `./gradlew test` + a clean compile; update roadmap docs + memory. Report.
+
+---
+
+## Outcome (status)
+
+**Shipped (tested, committed):**
+- A1 per-rank multipliers · A2 item-count scaling · A3 scoreboard sidebar · A5 rebirth follow-ups
+  (reset-prestige, auto-rebirth, placeholders) — all with unit tests.
+- C economy/requirement hooks: GemsEconomy backend · PlayerPoints currency requirement · BetonQuest
+  tag requirement (reflection, fail closed, live-validate) · rebirth celebration stinger.
+- A4 multi-ladder picker menu (`LadderPickerMenu`, ladder-aware path/rankup).
+
+**Satisfied by existing mechanisms (no new code needed):**
+- **TAB / FeatherBoard** and **DecentHolograms / HolographicDisplays**: read the plugin's
+  PlaceholderAPI output (`top_<n>_*`, progress placeholders), so leaderboard/progress lines already
+  work — a native auto-spawned hologram is the only extra, and it is live-visual.
+- **CMI groups** and **RedisEconomy**: both register a Vault provider, so they already work through
+  the `vault` group/economy backend.
+- **Resource-pack GUI theming**: per-icon `custom-model-data` + namespaced item ids (Oraxen/
+  ItemsAdder/Nexo/HeadDatabase) already ship (Track 2 M1), so menus can be fully re-textured.
+
+**Remaining (cosmetic/visual, need a live client — not unit-testable):**
+- Menu page-turn slide + shimmer icons (extra animation flags on the existing ticker).
+- Native auto-spawned/refreshed leaderboard hologram (DecentHolograms API).
+These are polish on top of already-working features; deferred pending live-client validation.

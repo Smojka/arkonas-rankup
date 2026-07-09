@@ -13,6 +13,7 @@ import com.arkonas.ranks.menu.ProgressBar;
 import com.arkonas.ranks.menu.RequirementItemRenderer;
 import com.arkonas.ranks.ranks.Rank;
 import com.arkonas.ranks.ranks.RankElement;
+import com.arkonas.ranks.ranks.Rankups;
 import com.arkonas.ranks.requirements.Requirement;
 
 /**
@@ -22,12 +23,21 @@ import com.arkonas.ranks.requirements.Requirement;
  */
 public class RankPathMenu extends LadderMenu<Rank> {
 
+  /** The ladder this path shows; defaults to the primary ladder for single-ladder servers. */
+  private final Rankups ladder;
+
   public RankPathMenu(MenuModule module, Player player, AbstractMenu parent) {
-    this(module, player, parent, 0);
+    this(module, player, parent, null, 0);
   }
 
-  public RankPathMenu(MenuModule module, Player player, AbstractMenu parent, int page) {
+  public RankPathMenu(MenuModule module, Player player, AbstractMenu parent, Rankups ladder) {
+    this(module, player, parent, ladder, 0);
+  }
+
+  public RankPathMenu(MenuModule module, Player player, AbstractMenu parent, Rankups ladder,
+      int page) {
     super(module, player, parent, module.getConfig().rows("path", 6), page);
+    this.ladder = ladder != null ? ladder : plugin.getRankups();
   }
 
   @Override
@@ -38,10 +48,10 @@ public class RankPathMenu extends LadderMenu<Rank> {
   @Override
   protected List<RankElement<Rank>> ladderEntries() {
     List<RankElement<Rank>> entries = new ArrayList<>();
-    if (plugin.getRankups() == null) {
+    if (ladder == null) {
       return entries;
     }
-    for (RankElement<Rank> element : plugin.getRankups().getTree().asList()) {
+    for (RankElement<Rank> element : ladder.getTree().asList()) {
       if (element.hasNext()) {
         entries.add(element);
       }
@@ -51,7 +61,7 @@ public class RankPathMenu extends LadderMenu<Rank> {
 
   @Override
   protected RankElement<Rank> currentEntry() {
-    return plugin.getRankups() == null ? null : plugin.getRankups().getByPlayer(player);
+    return ladder == null ? null : ladder.getByPlayer(player);
   }
 
   @Override
@@ -83,13 +93,13 @@ public class RankPathMenu extends LadderMenu<Rank> {
   protected void onEntryClick(RankElement<Rank> element, EntryState state) {
     if (state == EntryState.CURRENT) {
       theme.playSound(player, "click");
-      defer(() -> new RankupMenu(module, player, this).open());
+      defer(() -> new RankupMenu(module, player, this, ladder).open());
     }
   }
 
   @Override
   protected LadderMenu<Rank> pageMenu(int page) {
-    return new RankPathMenu(module, player, getParent(), page);
+    return new RankPathMenu(module, player, getParent(), ladder, page);
   }
 
   private List<Component> requirementLines(RankElement<Rank> element, boolean showProgress) {
