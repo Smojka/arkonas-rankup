@@ -34,25 +34,27 @@ public final class RebirthManager {
   private final boolean requiresTopPrestige;
   private final List<String> groups;
   private final boolean resetRanks;
+  private final boolean resetPrestige;
   private final RankRequirements requirements;
   private final List<String> commands;
   private final Map<String, String> messages;
 
   private RebirthManager(ArkonasRanksPlugin plugin, boolean enabled, boolean requiresTopPrestige,
-      List<String> groups, boolean resetRanks, RankRequirements requirements, List<String> commands,
-      Map<String, String> messages) {
+      List<String> groups, boolean resetRanks, boolean resetPrestige, RankRequirements requirements,
+      List<String> commands, Map<String, String> messages) {
     this.plugin = plugin;
     this.enabled = enabled;
     this.requiresTopPrestige = requiresTopPrestige;
     this.groups = groups;
     this.resetRanks = resetRanks;
+    this.resetPrestige = resetPrestige;
     this.requirements = requirements;
     this.commands = commands;
     this.messages = messages;
   }
 
   public static RebirthManager disabled(ArkonasRanksPlugin plugin) {
-    return new RebirthManager(plugin, false, false, List.of(), true,
+    return new RebirthManager(plugin, false, false, List.of(), true, false,
         new ListRankRequirements(List.of()), List.of(), defaultMessages());
   }
 
@@ -70,6 +72,7 @@ public final class RebirthManager {
       return disabled(plugin);
     }
     boolean resetRanks = section.getBoolean("reset-ranks", true);
+    boolean resetPrestige = section.getBoolean("reset-prestige", false);
     List<Requirement> reqs = plugin.getRequirements().getRequirements(section.getStringList("requirements"));
     List<String> commands = section.getStringList("commands");
 
@@ -80,7 +83,7 @@ public final class RebirthManager {
         messages.put(key.toLowerCase(Locale.ROOT), messageSection.getString(key));
       }
     }
-    return new RebirthManager(plugin, true, topPrestige, groups, resetRanks,
+    return new RebirthManager(plugin, true, topPrestige, groups, resetRanks, resetPrestige,
         new ListRankRequirements(reqs), commands, messages);
   }
 
@@ -173,6 +176,9 @@ public final class RebirthManager {
     if (resetRanks) {
       resetToFirstRank(player);
     }
+    if (resetPrestige) {
+      resetPrestige(player);
+    }
     runCommands(player, next);
     message(player, "success", next);
     return true;
@@ -187,6 +193,20 @@ public final class RebirthManager {
     String first = plugin.getRankups().getFirst().getRank();
     if (current != null && first != null && !current.equalsIgnoreCase(first)) {
       plugin.getPermissions().transferGroup(player.getUniqueId(), current, first);
+    }
+  }
+
+  /** Removes every prestige group the player holds, resetting them to zero prestiges. */
+  private void resetPrestige(Player player) {
+    Prestiges prestiges = plugin.getPrestiges();
+    if (prestiges == null) {
+      return;
+    }
+    for (Prestige prestige : prestiges.getTree()) {
+      String group = prestige.getRank();
+      if (group != null && plugin.getPermissions().inGroup(player.getUniqueId(), group)) {
+        plugin.getPermissions().transferGroup(player.getUniqueId(), group, null);
+      }
     }
   }
 

@@ -35,6 +35,7 @@ public class AutoRankup extends BukkitRunnable {
     boolean doRankup = auto == null || auto.getBoolean("rankup", true);
     boolean doPrestige = auto == null || auto.getBoolean("prestige", true);
     boolean doMax = auto != null && auto.getBoolean("max", false);
+    boolean doRebirth = auto != null && auto.getBoolean("rebirth", false);
 
     RankupHelper helper = rankup.getHelper();
     java.util.Collection<com.arkonas.ranks.ranks.Rankups> ladders =
@@ -66,9 +67,17 @@ public class AutoRankup extends BukkitRunnable {
       }
 
       // prestige is a single global track, checked once when no ladder advanced
+      boolean prestigedThisPass = false;
       if (!rankedThisPass && doPrestige && rankup.getPrestiges() != null
           && helper.checkPrestige(player, false)) {
         helper.prestige(player);
+        prestigedThisPass = true;
+      }
+
+      // rebirth last: only when nothing else advanced and the player is eligible
+      if (!rankedThisPass && !prestigedThisPass && doRebirth && rankup.getRebirth() != null
+          && rankup.getRebirth().canRebirth(player)) {
+        rankup.getRebirth().rebirth(player);
       }
     }
   }

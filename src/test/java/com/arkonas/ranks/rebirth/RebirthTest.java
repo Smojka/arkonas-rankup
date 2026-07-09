@@ -94,4 +94,22 @@ public class RebirthTest extends RankupTest {
 
     assertTrue(in(player, "reborn1"));
   }
+
+  private String placeholder(PlayerMock player, String params) {
+    return plugin.getPlaceholders().getExpansion().placeholder(player, params);
+  }
+
+  @Test
+  public void rebirthPlaceholders() {
+    PlayerMock player = atTop(100);
+    assertEquals("0", placeholder(player, "rebirth_count"));
+    assertEquals("None", placeholder(player, "current_rebirth"));
+    assertEquals("reborn1", placeholder(player, "next_rebirth"));
+
+    assertTrue(plugin.getRebirth().rebirth(player));
+
+    assertEquals("1", placeholder(player, "rebirth_count"));
+    assertEquals("reborn1", placeholder(player, "current_rebirth"));
+    assertEquals("reborn2", placeholder(player, "next_rebirth"));
+  }
 }

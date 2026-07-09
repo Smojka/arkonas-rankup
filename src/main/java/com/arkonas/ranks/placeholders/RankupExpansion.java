@@ -59,6 +59,11 @@ public class RankupExpansion implements Expansion {
             return top;
         }
 
+        String rebirthValue = rebirthPlaceholder(player, params);
+        if (rebirthValue != null) {
+            return rebirthValue;
+        }
+
         if (params.startsWith("requirement_")) {
             String[] parts = params.split("_", 3);
             return getPlaceholderRequirement(player, rank,
@@ -211,6 +216,34 @@ public class RankupExpansion implements Expansion {
             return String.valueOf(params.equals("player_rankups") ? counts[0] : counts[1]);
         }
         return null;
+    }
+
+    /**
+     * Rebirth stat placeholders: current_rebirth, next_rebirth, rebirth_count (alias rebirths).
+     * Returns null when params is not one of them.
+     */
+    private String rebirthPlaceholder(Player player, String params) {
+        boolean current = params.equals("current_rebirth");
+        boolean next = params.equals("next_rebirth");
+        boolean count = params.equals("rebirth_count") || params.equals("rebirths");
+        if (!current && !next && !count) {
+            return null;
+        }
+        com.arkonas.ranks.rebirth.RebirthManager rebirth = plugin.getRebirth();
+        String none = plugin.getConfig().getString("placeholders.not-in-ladder", "None");
+        if (rebirth == null || !rebirth.isEnabled()) {
+            return count ? "0" : none;
+        }
+        if (count) {
+            return String.valueOf(rebirth.currentIndex(player) + 1);
+        }
+        if (current) {
+            String group = rebirth.currentGroup(player);
+            return group == null ? none : group;
+        }
+        String group = rebirth.nextGroup(player);
+        return group == null
+            ? plugin.getConfig().getString("placeholders.highest-rank", "None") : group;
     }
 
     private String getPlaceholderRequirement(Player player, Rank rank, String requirementName, String params) {

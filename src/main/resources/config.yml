@@ -31,6 +31,8 @@ auto:
   # rank up repeatedly in a single pass until the player can no longer afford it
   # (false = advance at most one rank per pass, the classic behaviour)
   max: false
+  # automatically be reborn when eligible (needs rebirth.enabled; checked after rankup/prestige)
+  rebirth: false
 
 # whether /ranks and /prestiges should be enabled (true) or disabled (false)
 # /rankup3 reload will not do anything if this is changed,
@@ -236,6 +238,8 @@ rebirth:
     - rebirth3
   # send the player back to the first rank group after a rebirth
   reset-ranks: true
+  # also strip all prestige groups on rebirth (reset prestige back to zero)
+  reset-prestige: false
   # requirements to be reborn (same syntax as rank requirements)
   requirements:
     - 'money 1000000'
