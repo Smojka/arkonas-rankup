@@ -33,12 +33,17 @@ public final class ProgressDisplay extends BukkitRunnable implements Listener {
   private final BossBar.Overlay bossBarOverlay;
   private final boolean actionBarEnabled;
   private final String actionBarText;
+  private final boolean scoreboardEnabled;
+  private final String scoreboardTitle;
+  private final java.util.List<String> scoreboardLines;
 
   private final Map<UUID, BossBar> bossBars = new HashMap<>();
+  private final Map<UUID, org.bukkit.scoreboard.Scoreboard> boards = new HashMap<>();
 
   private ProgressDisplay(ArkonasRanksPlugin plugin, boolean expBar, boolean bossBarEnabled,
       String bossBarText, BossBar.Color bossBarColour, BossBar.Overlay bossBarOverlay,
-      boolean actionBarEnabled, String actionBarText) {
+      boolean actionBarEnabled, String actionBarText, boolean scoreboardEnabled,
+      String scoreboardTitle, java.util.List<String> scoreboardLines) {
     this.plugin = plugin;
     this.expBar = expBar;
     this.bossBarEnabled = bossBarEnabled;
@@ -47,6 +52,9 @@ public final class ProgressDisplay extends BukkitRunnable implements Listener {
     this.bossBarOverlay = bossBarOverlay;
     this.actionBarEnabled = actionBarEnabled;
     this.actionBarText = actionBarText;
+    this.scoreboardEnabled = scoreboardEnabled;
+    this.scoreboardTitle = scoreboardTitle;
+    this.scoreboardLines = scoreboardLines;
   }
 
   /** Builds a display from config, or null when the feature is disabled. */
@@ -56,6 +64,12 @@ public final class ProgressDisplay extends BukkitRunnable implements Listener {
     }
     ConfigurationSection boss = section.getConfigurationSection("bossbar");
     ConfigurationSection action = section.getConfigurationSection("actionbar");
+    ConfigurationSection board = section.getConfigurationSection("scoreboard");
+    java.util.List<String> lines = board == null ? java.util.List.of()
+        : board.getStringList("lines");
+    if (lines.isEmpty()) {
+      lines = java.util.List.of("&fRank: &e%rank%", "&fNext: &e%next%", "&a%bar% &7%percent%%");
+    }
     return new ProgressDisplay(plugin,
         section.getBoolean("expbar", false),
         boss != null && boss.getBoolean("enabled", false),
@@ -65,7 +79,10 @@ public final class ProgressDisplay extends BukkitRunnable implements Listener {
         overlay(boss == null ? null : boss.getString("overlay"), BossBar.Overlay.PROGRESS),
         action != null && action.getBoolean("enabled", false),
         action == null ? "&7Progress to %next%: &e%percent%%"
-            : action.getString("text", "&7Progress to %next%: &e%percent%%"));
+            : action.getString("text", "&7Progress to %next%: &e%percent%%"),
+        board != null && board.getBoolean("enabled", false),
+        board == null ? "&6&lRankUp" : board.getString("title", "&6&lRankUp"),
+        lines);
   }
 
   public long intervalTicks(ConfigurationSection section) {
@@ -100,6 +117,63 @@ public final class ProgressDisplay extends BukkitRunnable implements Listener {
     if (actionBarEnabled) {
       player.sendActionBar(render(player, actionBarText, fraction));
     }
+    if (scoreboardEnabled) {
+      updateScoreboard(player, fraction);
+    }
+  }
+
+  private void updateScoreboard(Player player, double fraction) {
+    org.bukkit.scoreboard.ScoreboardManager manager = Bukkit.getScoreboardManager();
+    if (manager == null) {
+      return;
+    }
+    org.bukkit.scoreboard.Scoreboard board =
+        boards.computeIfAbsent(player.getUniqueId(), id -> manager.getNewScoreboard());
+    org.bukkit.scoreboard.Objective objective = board.getObjective("arprogress");
+    if (objective == null) {
+      objective = board.registerNewObjective("arprogress", "dummy", legacy(scoreboardTitle));
+      objective.setDisplaySlot(org.bukkit.scoreboard.DisplaySlot.SIDEBAR);
+    }
+    for (String entry : board.getEntries()) {
+      board.resetScores(entry);
+    }
+    int percent = (int) Math.round(Math.max(0, Math.min(1, fraction)) * 100);
+    String bar = progressBar(fraction, 10, '■', '□');
+    int score = scoreboardLines.size();
+    for (int i = 0; i < scoreboardLines.size(); i++) {
+      String line = legacy(applyPlaceholders(scoreboardLines.get(i), player.getName(),
+          rankName(player), nextName(player), percent, bar));
+      // append i invisible reset codes so otherwise-identical lines stay distinct scoreboard entries
+      objective.getScore(line + "§r".repeat(i)).setScore(score--);
+    }
+    if (player.getScoreboard() != board) {
+      player.setScoreboard(board);
+    }
+  }
+
+  /** Substitutes the scoreboard/line placeholders. Pure; unit-tested. */
+  static String applyPlaceholders(String template, String player, String rank, String next,
+      int percent, String bar) {
+    return template
+        .replace("%player%", player)
+        .replace("%rank%", rank)
+        .replace("%next%", next)
+        .replace("%percent%", String.valueOf(percent))
+        .replace("%bar%", bar);
+  }
+
+  /** A fixed-width progress bar of filled/empty characters for the given fraction. Pure. */
+  static String progressBar(double fraction, int length, char filled, char empty) {
+    int on = (int) Math.round(Math.max(0, Math.min(1, fraction)) * length);
+    StringBuilder builder = new StringBuilder(length);
+    for (int i = 0; i < length; i++) {
+      builder.append(i < on ? filled : empty);
+    }
+    return builder.toString();
+  }
+
+  private static String legacy(String text) {
+    return org.bukkit.ChatColor.translateAlternateColorCodes('&', text);
   }
 
   /**
@@ -128,11 +202,17 @@ public final class ProgressDisplay extends BukkitRunnable implements Listener {
     clear(event.getPlayer());
   }
 
-  /** Hides and forgets a player's boss bar (on quit / disable). */
+  /** Hides and forgets a player's boss bar and sidebar (on quit / disable). */
   public void clear(Player player) {
     BossBar bar = bossBars.remove(player.getUniqueId());
     if (bar != null) {
       player.hideBossBar(bar);
+    }
+    if (boards.remove(player.getUniqueId()) != null) {
+      org.bukkit.scoreboard.ScoreboardManager manager = Bukkit.getScoreboardManager();
+      if (manager != null && player.isOnline()) {
+        player.setScoreboard(manager.getMainScoreboard());
+      }
     }
   }
 

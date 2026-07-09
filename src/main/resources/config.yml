@@ -285,6 +285,14 @@ progress-display:
   actionbar:
     enabled: false
     text: '&7Progress to %next%: &e%percent%%'
+  # Persistent sidebar toward the next rank. Placeholders: %rank% %next% %percent% %bar% %player%.
+  scoreboard:
+    enabled: false
+    title: '&6&lRankUp'
+    lines:
+      - '&fRank: &e%rank%'
+      - '&fNext: &e%next%'
+      - '&a%bar% &7%percent%%'
 
 # Milestone rewards (optional, needs database.enabled). Runs console commands when
 # a player's cumulative rankup / prestige count reaches a milestone. A specific
