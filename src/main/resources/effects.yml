@@ -78,3 +78,41 @@ prestige:
     overlay: PROGRESS
     seconds: 6
   broadcast-mode: none
+
+# Celebration for a rebirth (%next% is the new rebirth group). Its own stinger, distinct
+# from rankup/prestige. Fires from the rebirth command / auto-rebirth.
+rebirth:
+  sound:
+    name: ui.toast.challenge_complete
+    volume: 1.0
+    pitch: 0.8
+  jingle:
+    enabled: true
+    sound: block.note_block.chime
+    notes: 6
+    start-pitch: 0.7
+    pitch-step: 0.18
+    interval-ticks: 3
+  particle:
+    type: TOTEM_OF_UNDYING
+    count: 80
+    offset: 0.8
+  firework:
+    enabled: true
+    power: 2
+    colors: [ 'FF00FF', 'FFD700', '00FFFF' ]
+    type: BURST
+  title:
+    title: '&5&lREBIRTH!'
+    subtitle: '&e%player% &7was reborn as &5%next%'
+    fade-in: 10
+    stay: 90
+    fade-out: 20
+  actionbar: ''
+  bossbar:
+    enabled: false
+    text: '&5%player% was reborn!'
+    color: PURPLE
+    overlay: PROGRESS
+    seconds: 6
+  broadcast-mode: none

@@ -22,6 +22,7 @@ public final class ConfigurableEconomyProvider implements EconomyProvider {
     registry.register("vault", arg -> new VaultEconomyProvider().getEconomy());
     registry.register("playerpoints", arg -> PlayerPointsEconomy.tryCreate());
     registry.register("coinsengine", CoinsEngineEconomy::tryCreate);
+    registry.register("gemseconomy", GemsEconomyEconomy::tryCreate);
 
     String requested = plugin.getConfig().getString("economy.provider", "auto");
     return registry.select(requested);

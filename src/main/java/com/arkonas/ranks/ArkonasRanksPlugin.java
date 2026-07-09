@@ -661,6 +661,13 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     if (Bukkit.getPluginManager().isPluginEnabled("SuperbVote")) {
       requirements.addRequirements(new SuperbVoteVotesRequirement(this));
     }
+    if (Bukkit.getPluginManager().isPluginEnabled("PlayerPoints")) {
+      requirements.addRequirements(
+          new com.arkonas.ranks.requirements.requirement.playerpoints
+              .PlayerPointsDeductibleRequirement(this, "playerpoints"),
+          new com.arkonas.ranks.requirements.requirement.playerpoints
+              .PlayerPointsRequirement(this, "playerpointsh"));
+    }
     if (Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) {
       requirements.addRequirements(
           new com.arkonas.ranks.requirements.requirement.worldguard.WorldGuardRegionRequirement(
@@ -669,6 +676,10 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     if (Bukkit.getPluginManager().isPluginEnabled("Quests")) {
       requirements.addRequirements(
           new com.arkonas.ranks.requirements.requirement.quests.QuestRequirement(this));
+    }
+    if (Bukkit.getPluginManager().isPluginEnabled("BetonQuest")) {
+      requirements.addRequirements(
+          new com.arkonas.ranks.requirements.requirement.betonquest.BetonQuestTagRequirement(this));
     }
   }
 

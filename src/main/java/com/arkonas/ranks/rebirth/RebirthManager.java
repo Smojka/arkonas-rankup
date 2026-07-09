@@ -179,6 +179,9 @@ public final class RebirthManager {
     if (resetPrestige) {
       resetPrestige(player);
     }
+    if (plugin.getEffectsListener() != null) {
+      plugin.getEffectsListener().celebrateRebirth(player, current, next);
+    }
     runCommands(player, next);
     message(player, "success", next);
     return true;
