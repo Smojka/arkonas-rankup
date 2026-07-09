@@ -57,4 +57,11 @@ public class LuckPermsGroupProvider implements GroupProvider {
 
     luckPerms.getUserManager().saveUser(user);
   }
+
+  @Override
+  public void removeGroup(UUID uuid, String group) {
+    User user = luckPerms.getUserManager().getUser(uuid);
+    user.data().remove(InheritanceNode.builder(group).context(contextSet).build());
+    luckPerms.getUserManager().saveUser(user);
+  }
 }

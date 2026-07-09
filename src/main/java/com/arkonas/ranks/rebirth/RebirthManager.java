@@ -208,7 +208,8 @@ public final class RebirthManager {
     for (Prestige prestige : prestiges.getTree()) {
       String group = prestige.getRank();
       if (group != null && plugin.getPermissions().inGroup(player.getUniqueId(), group)) {
-        plugin.getPermissions().transferGroup(player.getUniqueId(), group, null);
+        // remove-only: transferGroup requires a non-null target, so use removeGroup here
+        plugin.getPermissions().removeGroup(player.getUniqueId(), group);
       }
     }
   }

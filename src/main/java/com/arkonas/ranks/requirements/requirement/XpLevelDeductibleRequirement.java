@@ -17,7 +17,7 @@ public class XpLevelDeductibleRequirement extends XpLevelRequirement implements 
 
   @Override
   public void apply(Player player, double multiplier) {
-    player.setLevel(player.getLevel() - (int) Math.round(getValueInt() * multiplier));
+    player.setLevel(player.getLevel() - (int) Math.round(getValueDouble() * multiplier));
   }
 
   /** Deducts the discounted level cost so the amount taken matches {@link #getTotal(Player)}. */

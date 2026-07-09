@@ -325,6 +325,12 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     if (menuModule != null) {
       menuModule.closeAll();
     }
+    // hide any persistent boss bars / restore sidebars so they don't linger after a disable
+    if (progressDisplay != null) {
+      for (org.bukkit.entity.Player online : Bukkit.getOnlinePlayers()) {
+        progressDisplay.clear(online);
+      }
+    }
     if (placeholders != null) {
       placeholders.unregister();
     }

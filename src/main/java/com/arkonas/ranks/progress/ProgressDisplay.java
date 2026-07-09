@@ -133,6 +133,12 @@ public final class ProgressDisplay extends BukkitRunnable implements Listener {
     if (objective == null) {
       objective = board.registerNewObjective("arprogress", "dummy", legacy(scoreboardTitle));
       objective.setDisplaySlot(org.bukkit.scoreboard.DisplaySlot.SIDEBAR);
+      try {
+        // hide the red score integers on the right (Paper API; harmless to skip elsewhere)
+        objective.numberFormat(io.papermc.paper.scoreboard.numbers.NumberFormat.blank());
+      } catch (Throwable ignored) {
+        // older/other server: leave default number rendering
+      }
     }
     for (String entry : board.getEntries()) {
       board.resetScores(entry);

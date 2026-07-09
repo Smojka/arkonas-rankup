@@ -15,7 +15,7 @@ public class TokensDeductibleRequirement extends TokensRequirement implements De
 
   @Override
   public void apply(Player player, double multiplier) {
-    manager.removeTokens(player, Math.round(getValueInt() * multiplier));
+    manager.removeTokens(player, Math.round(getValueDouble() * multiplier));
   }
 
   /** Deducts the discounted token cost so the amount taken matches {@link #getTotal(Player)}. */

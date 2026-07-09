@@ -20,7 +20,7 @@ public class VotingPluginPointsDeductibleRequirement extends VotingPluginPointsR
   @Override
   public void apply(Player player, double multiplier) {
     VotingPluginUser user = VotingPluginMain.getPlugin().getVotingPluginUserManager().getVotingPluginUser(player);
-    if (!user.removePoints((int) Math.round(getValueInt() * multiplier))) {
+    if (!user.removePoints((int) Math.round(getValueDouble() * multiplier))) {
       plugin.getLogger().warning("Unable to remove VotingPlugin points");
     }
   }

@@ -21,4 +21,9 @@ public class TestGroupProvider implements GroupProvider {
     }
     groups.put(uuid, group.toLowerCase());
   }
+
+  @Override
+  public void removeGroup(UUID uuid, String group) {
+    groups.remove(uuid, group.toLowerCase());
+  }
 }
