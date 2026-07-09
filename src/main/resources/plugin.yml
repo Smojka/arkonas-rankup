@@ -4,7 +4,7 @@ main: com.arkonas.ranks.ArkonasRanksPlugin
 author: Arkonas
 description: Feature-complete rankup system with prestiges, GUIs, effects and stats.
 depend: [Vault]
-softdepend: [PlaceholderAPI, mcMMO, AdvancedAchievements, Towny, SuperbVote, VotingPlugin, LuckPerms, DiscordSRV, Citizens, WorldGuard]
+softdepend: [PlaceholderAPI, mcMMO, AdvancedAchievements, Towny, SuperbVote, VotingPlugin, LuckPerms, DiscordSRV, Citizens, WorldGuard, Quests]
 api-version: '1.21'
 
 commands:

@@ -64,7 +64,14 @@ strip); the reflection listener (`CitizensHook`) is the live-validate part. Opt-
 - **Jobs Reborn** (`jobs-level <job> <n>`): not needed as a dedicated type — the existing
   `PlaceholderRequirement` already gates on `%jobs_...%` (and mcMMO/votes/playtime/stats), so any
   PlaceholderAPI-exposed value works out of the box.
-- Still open: **Quests**/**BetonQuest** completion requirements.
+- **Quests** (PikaMug) `quest <id or name>`: shipped. `QuestRequirement` registered when Quests is
+  enabled; completion lookup is the reflection `QuestsCompletion` adapter (getQuester/
+  getCompletedQuests resolved up front, per-element id getter discovered on first use since
+  completed quests are Strings or Quest objects across versions; fails closed). Whole value = one
+  quest id (names may contain spaces), matched case-insensitively; pure `matches` unit-tested (5).
+  Softdepend Quests.
+- Still open: **BetonQuest** (tag-based, a different model — `hasTag(tag)` rather than completed
+  quests).
 
 ### Native holograms  (M7)  — extends M4
 - **DecentHolograms / HolographicDisplays** API adapter to auto-create + refresh a managed

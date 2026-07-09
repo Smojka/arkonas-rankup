@@ -666,6 +666,10 @@ public class ArkonasRanksPlugin extends JavaPlugin {
           new com.arkonas.ranks.requirements.requirement.worldguard.WorldGuardRegionRequirement(
               this));
     }
+    if (Bukkit.getPluginManager().isPluginEnabled("Quests")) {
+      requirements.addRequirements(
+          new com.arkonas.ranks.requirements.requirement.quests.QuestRequirement(this));
+    }
   }
 
   private void setupEconomy() {
