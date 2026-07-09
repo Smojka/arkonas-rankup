@@ -19,7 +19,9 @@ public class ItemDeductibleRequirement extends ItemRequirement implements Deduct
 
   @Override
   public void apply(Player player, double multiplier) {
-    int count = (int) (getTotal(player) * multiplier);
+    // use the raw configured count here (not getTotal, which already folds in the cost factor) so
+    // apply(player) below can pass costFactor without applying the discount twice
+    int count = (int) Math.round(getValueDouble() * multiplier);
 
     PlayerInventory inventory = player.getInventory();
     ItemStack[] contents;
@@ -51,6 +53,12 @@ public class ItemDeductibleRequirement extends ItemRequirement implements Deduct
     if (count > 0) {
       throw new IllegalStateException("REPORT THIS ERROR TO THE DEV - COULD NOT DEDUCT ALL ITEMS");
     }
+  }
+
+  /** Deducts the discounted item count so the amount taken matches {@link #getTotal(Player)}. */
+  @Override
+  public void apply(Player player) {
+    apply(player, costFactor(player));
   }
 
   @Override
