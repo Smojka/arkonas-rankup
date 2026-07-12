@@ -121,6 +121,8 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   private com.arkonas.ranks.multiplier.MultiplierService multipliers;
   @Getter
   private com.arkonas.ranks.progress.ProgressDisplay progressDisplay;
+  /** The scheduler currently driving recurring cost sales, if any (tracked so reload can restart it). */
+  private com.arkonas.ranks.multiplier.SaleScheduler saleScheduler;
   @Getter
   private com.arkonas.ranks.milestone.MilestoneService milestones;
   @Getter
@@ -191,6 +193,9 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     // false the plugin behaves exactly like the Rankup3-parity core.
     boolean menus = config.getBoolean("menus.enabled");
     if (menus) {
+      // populate the namespaced-item registry so menu icons like `oraxen:rank_icon` resolve to the
+      // real custom item (falls back to a plain material for any plugin that is absent)
+      com.arkonas.ranks.menu.items.NamespacedItemHooks.install(getLogger());
       menuModule = new com.arkonas.ranks.menu.MenuModule(this);
       if (config.getBoolean("ranks-gui")
           || "gui".equalsIgnoreCase(config.getString("confirmation-type", ""))) {
@@ -223,6 +228,9 @@ public class ArkonasRanksPlugin extends JavaPlugin {
             ? new com.arkonas.ranks.menu.commands.MenuPrestigesCommand(this, menuModule, prestigesParity)
             : prestigesParity);
       }
+      // companion to /maxrankup: prestige as many times as possible in one pass
+      getCommand("maxprestige").setExecutor(
+          new com.arkonas.ranks.commands.MaxPrestigeCommand(this));
     }
     if (config.getBoolean("max-rankup.enabled")) {
       getCommand("maxrankup").setExecutor(new MaxRankupCommand(this));
@@ -303,19 +311,9 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     placeholders = new Placeholders(this);
     placeholders.register();
 
-    // live progress display (opt-in). Toggling it needs a restart, like other scheduled features.
-    if (progressDisplay != null) {
-      getServer().getPluginManager().registerEvents(progressDisplay, this);
-      long interval = progressDisplay.intervalTicks(config.getConfigurationSection("progress-display"));
-      progressDisplay.runTaskTimer(this, interval, interval);
-    }
-
-    // recurring cost sales (opt-in). Starting/stopping the scheduler needs a restart.
-    com.arkonas.ranks.multiplier.SaleSchedule saleSchedule =
-        com.arkonas.ranks.multiplier.SaleSchedule.fromConfig(config.getConfigurationSection("boosters"));
-    if (!saleSchedule.isEmpty() && multipliers != null) {
-      new com.arkonas.ranks.multiplier.SaleScheduler(saleSchedule, multipliers).start(this);
-    }
+    // The live progress display and the recurring-sale scheduler are wired inside refreshRanks()
+    // (see wireLiveComponents): their backing services are (re)built there, on the deferred boot
+    // tick and on every /aru reload, so wiring them here in onEnable would race that assignment.
   }
 
 
@@ -465,6 +463,10 @@ public class ArkonasRanksPlugin extends JavaPlugin {
 
   public void refreshRanks() {
     try {
+      // tear down the previously-wired live components before rebuilding their services below,
+      // so a /aru reload does not leak the old boss bars / sidebars or double-schedule the tasks
+      teardownLiveComponents();
+
       registerRequirements();
       Bukkit.getPluginManager().callEvent(new RankupRegisterEvent(this));
 
@@ -495,10 +497,58 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       progressDisplay = com.arkonas.ranks.progress.ProgressDisplay.fromConfig(
           this, getConfig().getConfigurationSection("progress-display"));
 
+      // now that multipliers + progressDisplay are (re)built, register + schedule them
+      wireLiveComponents();
 
     } catch (RuntimeException e) {
       this.errorMessage = e.getClass().getName() + ": " + e.getMessage();
       e.printStackTrace();
+    }
+  }
+
+  /**
+   * Registers and schedules the live progress display and the recurring cost-sale scheduler after
+   * their services have been (re)built in {@link #refreshRanks()}. Both are opt-in and stay off
+   * unless configured. Called on the deferred boot tick and on every {@code /aru reload}; the
+   * matching {@link #teardownLiveComponents()} runs first so nothing is double-scheduled.
+   */
+  private void wireLiveComponents() {
+    if (progressDisplay != null) {
+      getServer().getPluginManager().registerEvents(progressDisplay, this);
+      long interval = progressDisplay.intervalTicks(config.getConfigurationSection("progress-display"));
+      progressDisplay.runTaskTimer(this, interval, interval);
+    }
+
+    com.arkonas.ranks.multiplier.SaleSchedule saleSchedule =
+        com.arkonas.ranks.multiplier.SaleSchedule.fromConfig(config.getConfigurationSection("boosters"));
+    if (!saleSchedule.isEmpty() && multipliers != null) {
+      saleScheduler = new com.arkonas.ranks.multiplier.SaleScheduler(saleSchedule, multipliers);
+      saleScheduler.start(this);
+    }
+  }
+
+  /**
+   * Unregisters, cancels and clears the live components wired by {@link #wireLiveComponents()} so a
+   * reload can rebuild them cleanly. Safe to call when nothing was wired (first boot).
+   */
+  private void teardownLiveComponents() {
+    if (progressDisplay != null) {
+      org.bukkit.event.HandlerList.unregisterAll(progressDisplay);
+      try {
+        progressDisplay.cancel();
+      } catch (IllegalStateException ignored) {
+        // was never scheduled (e.g. an error aborted the previous refresh)
+      }
+      for (Player online : Bukkit.getOnlinePlayers()) {
+        progressDisplay.clear(online);
+      }
+    }
+    if (saleScheduler != null) {
+      try {
+        saleScheduler.cancel();
+      } catch (IllegalStateException ignored) {
+      }
+      saleScheduler = null;
     }
   }
 
@@ -617,7 +667,6 @@ public class ArkonasRanksPlugin extends JavaPlugin {
         new AdvancementRequirement(this),
         new GroupRequirement(this),
         new PermissionRequirement(this),
-        new PlaceholderRequirement(this),
         new WorldRequirement(this),
         new BlockBreakRequirement(this),
         new PlayerKillsRequirement(this),
@@ -631,6 +680,12 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       requirements.addRequirements(
           new MoneyRequirement(this, "moneyh"),
           new MoneyDeductibleRequirement(this, "money"));
+    }
+    // PlaceholderAPI is only a softdepend, and PlaceholderRequirement touches PAPI classes directly,
+    // so register it only when PAPI is present — otherwise a configured `placeholder` requirement
+    // would throw NoClassDefFoundError on evaluation.
+    if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+      requirements.addRequirements(new PlaceholderRequirement(this));
     }
 
     PluginManager pluginManager = Bukkit.getPluginManager();

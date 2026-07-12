@@ -110,4 +110,15 @@ class NamespacedItemsTest {
     assertEquals("test:gem", icons.iconFor("money").itemId());
     assertEquals(Material.PAPER, icons.iconFor("money").build(null, null, false).getType());
   }
+
+  @Test
+  void installWithNoCustomItemPluginsDegradesToNull() {
+    // none of Oraxen/Nexo/ItemsAdder/HeadDatabase are enabled in the mock server, so install must
+    // publish an empty registry (no crash) and every namespaced id resolves to null -> fallback
+    NamespacedItemHooks.install(java.util.logging.Logger.getLogger("test"));
+
+    assertNull(NamespacedItems.active().create("oraxen:rank_icon"));
+    assertNull(NamespacedItems.active().create("itemsadder:pack:sword"));
+    assertNull(NamespacedItems.active().create("hdb:1234"));
+  }
 }

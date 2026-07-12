@@ -22,7 +22,7 @@ Licensed **GPL-3.0** (derived from Rankup3 by Okx; see `LICENSE.txt`).
 
 Everything documented for Rankup3 3.15.3 works identically:
 
-- `/rankup` (+ `noconfirm`), `/ranks` (text or GUI), `/maxrankup`, `/prestige`, `/prestiges`
+- `/rankup` (+ `noconfirm`), `/ranks` (text or GUI), `/maxrankup`, `/maxprestige`, `/prestige`, `/prestiges`
 - Admin: `/arkonasranks` (aliases `/aru`, `/rankup3`, `/pru`): `reload`, `forcerankup`,
   `forceprestige`, `rankdown`, `playtime get|set|add`, `placeholders`, `tree`
 - All permission nodes are unchanged (`rankup.*`)
