@@ -17,8 +17,14 @@ public class AdvancedAchievementsAchievementRequirement extends Requirement {
 
   @Override
   public boolean check(Player player) {
-    AdvancedAchievementsAPI api = AdvancedAchievementsAPIFetcher.fetchInstance().get();
-    return api.hasPlayerReceivedAchievement(player.getUniqueId(), getValueString());
+    try {
+      AdvancedAchievementsAPI api = AdvancedAchievementsAPIFetcher.fetchInstance().get();
+      return api.hasPlayerReceivedAchievement(player.getUniqueId(), getValueString());
+    } catch (Throwable t) {
+      // AdvancedAchievements not ready / API changed -> fail closed (requirement unmet)
+      logHookFailureOnce(t);
+      return false;
+    }
   }
 
   @Override

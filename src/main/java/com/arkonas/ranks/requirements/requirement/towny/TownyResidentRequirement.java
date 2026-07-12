@@ -15,7 +15,12 @@ public class TownyResidentRequirement extends Requirement {
 
   @Override
   public boolean check(Player player) {
-    return TownyUtils.getInstance().isResident(player) == getValueBoolean();
+    try {
+      return TownyUtils.getInstance().isResident(player) == getValueBoolean();
+    } catch (Throwable t) {
+      logHookFailureOnce(t);
+      return false;
+    }
   }
 
   @Override

@@ -51,7 +51,23 @@ public class YamlDeserializer {
         messages = Collections.emptyMap();
       }
 
-      ranksList.add(new RankSerialized(rank, next, displayName, commands, requirements, prestigeRequirements, messages));
+      double costMultiplier = section.getDouble("cost-multiplier", 1.0);
+
+      RankSerialized serialized = new RankSerialized(rank, next, displayName, commands, requirements, prestigeRequirements, messages, costMultiplier);
+
+      // capture a per-rank celebration: override, preserving value types (booleans, numbers, lists)
+      ConfigurationSection celebrationSection = section.getConfigurationSection("celebration");
+      if (celebrationSection != null) {
+        Map<String, Object> celebration = new HashMap<>();
+        for (String key : celebrationSection.getKeys(true)) {
+          if (!celebrationSection.isConfigurationSection(key)) {
+            celebration.put(key, celebrationSection.get(key));
+          }
+        }
+        serialized.setCelebration(celebration);
+      }
+
+      ranksList.add(serialized);
     }
     return ranksList;
   }

@@ -20,7 +20,7 @@ class CostFormulaTest {
 
   private static RankSerialized rank(String name, String next, List<String> requirements) {
     return new RankSerialized(name, next, name, new ArrayList<>(), requirements, null,
-        new HashMap<>());
+        new HashMap<>(), 1.0);
   }
 
   private static List<String> reqs(String... lines) {
@@ -126,7 +126,7 @@ class CostFormulaTest {
   @Test
   void skipsPrestigeStyleRequirementMaps() {
     RankSerialized prestige = new RankSerialized("P", "Q", "P", new ArrayList<>(), null,
-        new HashMap<>(), new HashMap<>());
+        new HashMap<>(), new HashMap<>(), 1.0);
     List<RankSerialized> out =
         CostFormulaExpander.expand(power(0, false), List.of(prestige));
     // Unchanged, no money injected, no crash.

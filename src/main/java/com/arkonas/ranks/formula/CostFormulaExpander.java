@@ -165,13 +165,16 @@ public final class CostFormulaExpander {
   }
 
   private static RankSerialized copyWithRequirements(RankSerialized rank, List<String> requirements) {
-    return new RankSerialized(
+    RankSerialized copy = new RankSerialized(
         rank.getRank(),
         rank.getNext(),
         rank.getDisplayName(),
         rank.getCommands(),
         requirements,
         rank.getPrestigeRequirements(),
-        rank.getMessages());
+        rank.getMessages(),
+        rank.getCostMultiplier());
+    copy.setCelebration(rank.getCelebration());
+    return copy;
   }
 }

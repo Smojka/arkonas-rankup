@@ -1,0 +1,11 @@
+a:
+  rank: 'A'
+  next: 'B'
+  cost-multiplier: 0.5
+  requirements:
+    - 'money 100'
+b:
+  rank: 'B'
+  next: 'C'
+  requirements:
+    - 'money 100'

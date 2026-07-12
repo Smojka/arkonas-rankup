@@ -3,3 +3,8 @@ a:
   next: 'b'
   requirements:
     - 'world the_nether'
+b:
+  rank: 'b'
+  next: 'c'
+  requirements:
+    - 'world the_end the_nether'

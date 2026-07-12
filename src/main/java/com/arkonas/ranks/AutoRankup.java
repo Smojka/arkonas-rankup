@@ -59,8 +59,10 @@ public class AutoRankup extends BukkitRunnable {
                 break;
               }
             }
-          } else if (helper.checkRankup(player, ladder, false)) {
-            helper.rankup(player, ladder);
+          } else if (helper.rankupOnce(player, ladder)) {
+            // rankupOnce is cooldown-free: the manual `cooldown` is a /rankup spam guard, not an
+            // auto-progression gate. Using it (instead of rankup) also stops ladder 1's cooldown
+            // from blocking every other ladder in the same pass, and keeps rankedThisPass accurate.
             rankedThisPass = true;
           }
         }

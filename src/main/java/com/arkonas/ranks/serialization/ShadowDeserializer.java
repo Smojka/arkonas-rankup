@@ -49,9 +49,40 @@ public class ShadowDeserializer {
         messages = Collections.emptyMap();
       }
 
-      ranksList.add(new RankSerialized(rank, next, displayName, commands, requirements, prestigeRequirements, messages));
+      Object costMultiplierObject = value.get("cost-multiplier");
+      double costMultiplier = costMultiplierObject instanceof Number
+          ? ((Number) costMultiplierObject).doubleValue() : 1.0;
+
+      RankSerialized serialized = new RankSerialized(rank, next, displayName, commands, requirements, prestigeRequirements, messages, costMultiplier);
+
+      // capture a per-rank celebration: override from TOML too, matching the YAML path, preserving
+      // value types (booleans/numbers/lists) so EffectsListener parses them correctly
+      Object celebrationObject = value.get("celebration");
+      if (celebrationObject instanceof UnmodifiableConfig) {
+        serialized.setCelebration(flattenTyped((UnmodifiableConfig) celebrationObject));
+      }
+
+      ranksList.add(serialized);
     }
     return ranksList;
+  }
+
+  /** Flattens a TOML sub-config to dotted leaf keys with their original typed values. */
+  private static Map<String, Object> flattenTyped(UnmodifiableConfig config) {
+    Map<String, Object> map = new HashMap<>();
+    collectTyped(map, config, "");
+    return map;
+  }
+
+  private static void collectTyped(Map<String, Object> map, UnmodifiableConfig config, String prefix) {
+    for (Entry entry : config.entrySet()) {
+      Object value = entry.getValue();
+      if (value instanceof UnmodifiableConfig) {
+        collectTyped(map, (UnmodifiableConfig) value, prefix + entry.getKey() + ".");
+      } else if (value != null) {
+        map.put(prefix + entry.getKey(), value);
+      }
+    }
   }
 
   private static void updateMap(Map<String, String> map, UnmodifiableConfig config, String prefix) {

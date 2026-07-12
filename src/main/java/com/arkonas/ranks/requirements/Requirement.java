@@ -118,4 +118,23 @@ public abstract class Requirement implements Cloneable {
   public double getTotal(Player player) {
     return 1;
   }
+
+  /** Requirement names already warned about, so a broken hook logs once, not every tick. */
+  private static final java.util.Set<String> WARNED_HOOK_FAILURES =
+      java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+  /**
+   * Records that this requirement's plugin-hook evaluation threw and was treated as unmet
+   * (fail-closed), logging once per requirement name so a missing/faulty dependency degrades
+   * gracefully during {@code /rankup}, menu renders and placeholder lookups instead of spamming
+   * the console or surfacing as an error every tick.
+   */
+  protected void logHookFailureOnce(Throwable t) {
+    // dedup on getFullName(): getName() is a constant per requirement TYPE (e.g. "placeholder",
+    // "mcmmo"), so keying on it would silence every hook failure after the first of that type
+    if (WARNED_HOOK_FAILURES.add(getFullName())) {
+      plugin.getLogger().warning("Requirement '" + getFullName() + "' failed to evaluate and is being"
+          + " treated as unmet; is its plugin installed and fully loaded? (" + t + ")");
+    }
+  }
 }

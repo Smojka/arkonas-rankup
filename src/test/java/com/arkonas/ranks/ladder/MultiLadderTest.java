@@ -69,6 +69,20 @@ public class MultiLadderTest extends RankupTest {
   }
 
   @Test
+  public void nonMaxAutoAdvancesEveryLadderDespiteCooldown() {
+    PlayerMock player = player();
+    player.addAttachment(plugin, "rankup.auto", true);
+    // a manual cooldown set: it must not let ladder 1's cooldown block the other ladders in one pass
+    plugin.getConfig().set("cooldown", 5);
+    // auto.max defaults to false, so this exercises the single-step-per-ladder branch
+
+    new com.arkonas.ranks.AutoRankup(plugin).run();
+
+    assertTrue(in(player, "B"), "default ladder should advance one step");
+    assertTrue(in(player, "mine2"), "mining ladder should advance one step in the same pass");
+  }
+
+  @Test
   public void autoAdvancesEveryLadder() {
     PlayerMock player = player();
     player.addAttachment(plugin, "rankup.auto", true);

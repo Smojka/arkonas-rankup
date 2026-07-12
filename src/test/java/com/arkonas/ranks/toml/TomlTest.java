@@ -7,6 +7,7 @@ import com.arkonas.ranks.RankupTest;
 import com.arkonas.ranks.ranks.Rankups;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TomlTest extends RankupTest {
@@ -27,6 +28,16 @@ public class TomlTest extends RankupTest {
     plugin.getHelper().rankup(player);
 
     player.assertSaid("toml");
+  }
+
+  @Test
+  public void perRankCelebrationOverrideSurvivesTomlDeserialization() {
+    org.bukkit.configuration.ConfigurationSection celebration =
+        plugin.getRankups().getRankByName("A").getSection().getConfigurationSection("celebration");
+    assertNotNull(celebration, "TOML per-rank celebration: override should be retained");
+    assertEquals("block.note_block.pling",
+        celebration.getConfigurationSection("sound").getString("name"),
+        "the nested celebration value should keep its structure through TOML flatten + rebuild");
   }
 
   @Test

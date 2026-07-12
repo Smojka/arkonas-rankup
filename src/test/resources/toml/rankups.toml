@@ -4,6 +4,8 @@ next = "B"
 requirements = [
     "money 1500"
 ]
+[A.celebration.sound]
+    name = "block.note_block.pling"
 [B]
 rank = "B"
 next = "C"

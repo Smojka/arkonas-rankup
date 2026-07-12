@@ -35,18 +35,25 @@ public class RankRequirementsFactory {
 
   public static RankRequirements getRequirements(ArkonasRanksPlugin plugin, List<String> requirements,
       Map<String, List<String>> prestigeRequirements) {
+    return getRequirements(plugin, requirements, prestigeRequirements, 1.0);
+  }
+
+  public static RankRequirements getRequirements(ArkonasRanksPlugin plugin, List<String> requirements,
+      Map<String, List<String>> prestigeRequirements, double perRankFactor) {
+    RankRequirements built;
     if (prestigeRequirements != null) {
       ConfigurationSection section = new MemoryConfiguration();
       for (Map.Entry<String, List<String>> entry : prestigeRequirements.entrySet()) {
         section.set(entry.getKey(), entry.getValue());
       }
-      return getPrestigeListRequirements(plugin, section);
+      built = getPrestigeListRequirements(plugin, section);
     } else if (requirements != null) {
-      return getListRequirements(plugin, requirements);
+      built = getListRequirements(plugin, requirements);
     } else {
 //      throw new IllegalArgumentException("No requirements set.");
       return null;
     }
+    return applyFactor(built, perRankFactor);
   }
 
   private static Collection<String> getRequirementStrings(ConfigurationSection section, String key) {

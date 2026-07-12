@@ -90,6 +90,13 @@ public class InfoCommand implements TabExecutor {
 
         Prestiges prestiges = plugin.getPrestiges();
         RankElement<Prestige> rankElement = prestiges.getByPlayer(player);
+        if (rankElement == null) {
+          // player has not reached the top rank / any prestige group — the normal case an admin
+          // runs forceprestige on. getByPlayer returns null here, so guard before dereferencing it
+          // (mirrors the forcerankup branch above).
+          sender.sendMessage(ChatColor.YELLOW + "That player is not in any prestige groups.");
+          return true;
+        }
         if (!rankElement.hasNext()) {
           sender.sendMessage(ChatColor.YELLOW + "That player is at the last prestige.");
           return true;

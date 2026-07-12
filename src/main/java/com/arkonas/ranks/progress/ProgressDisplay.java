@@ -39,6 +39,9 @@ public final class ProgressDisplay extends BukkitRunnable implements Listener {
 
   private final Map<UUID, BossBar> bossBars = new HashMap<>();
   private final Map<UUID, org.bukkit.scoreboard.Scoreboard> boards = new HashMap<>();
+  /** The player's real XP-bar fill, captured the first time the exp-bar mirror overrides it, so it
+   *  can be restored on quit/disable instead of leaving rank progress baked into their saved data. */
+  private final Map<UUID, Float> savedExp = new HashMap<>();
 
   private ProgressDisplay(ArkonasRanksPlugin plugin, boolean expBar, boolean bossBarEnabled,
       String bossBarText, BossBar.Color bossBarColour, BossBar.Overlay bossBarOverlay,
@@ -105,6 +108,7 @@ public final class ProgressDisplay extends BukkitRunnable implements Listener {
     float progress = (float) Math.max(0, Math.min(1, fraction));
 
     if (expBar) {
+      savedExp.putIfAbsent(player.getUniqueId(), player.getExp()); // remember the real value once
       player.setExp(progress);
     }
     if (bossBarEnabled) {
@@ -208,7 +212,8 @@ public final class ProgressDisplay extends BukkitRunnable implements Listener {
     clear(event.getPlayer());
   }
 
-  /** Hides and forgets a player's boss bar and sidebar (on quit / disable). */
+  /** Hides and forgets a player's boss bar and sidebar, and restores their real XP bar (on quit /
+   *  disable / display teardown). */
   public void clear(Player player) {
     BossBar bar = bossBars.remove(player.getUniqueId());
     if (bar != null) {
@@ -219,6 +224,10 @@ public final class ProgressDisplay extends BukkitRunnable implements Listener {
       if (manager != null && player.isOnline()) {
         player.setScoreboard(manager.getMainScoreboard());
       }
+    }
+    Float original = savedExp.remove(player.getUniqueId());
+    if (original != null && player.isOnline()) {
+      player.setExp(original); // undo the exp-bar mirror so vanilla XP isn't left overwritten
     }
   }
 

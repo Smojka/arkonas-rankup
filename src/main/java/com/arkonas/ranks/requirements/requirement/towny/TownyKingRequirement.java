@@ -15,7 +15,12 @@ public class TownyKingRequirement extends Requirement {
 
   @Override
   public boolean check(Player player) {
-    return TownyUtils.getInstance().isKing(player) == getValueBoolean();
+    try {
+      return TownyUtils.getInstance().isKing(player) == getValueBoolean();
+    } catch (Throwable t) {
+      logHookFailureOnce(t);
+      return false;
+    }
   }
 
   @Override
