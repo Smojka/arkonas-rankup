@@ -25,7 +25,7 @@ import com.arkonas.ranks.requirements.Requirement;
  * reward commands. Rebirth is a single global track, disabled by default.
  *
  * <p>Self-contained: its messages live in its own config block, so enabling it touches no locale
- * files and leaves the parity behaviour untouched.</p>
+ * files and leaves the chat behaviour untouched.</p>
  */
 public final class RebirthManager {
 

@@ -14,7 +14,7 @@ public class CommandInfoTest extends RankupTest {
     // placeholders command should never throw an exception
     PlayerMock player = server.addPlayer();
     player.addAttachment(plugin, "rankup.admin", true);
-    plugin.getCommand("rankup3").execute(player, "pru", new String[] {"placeholders"});
+    plugin.getCommand("arkonasranks").execute(player, "aru", new String[] {"placeholders"});
 
     player.assertSaid("--- ArkonasRanks placeholders ---");
   }
@@ -28,7 +28,7 @@ public class CommandInfoTest extends RankupTest {
     plugin.getEconomy().setPlayer(player, 11);
     groupProvider.transferGroup(player.getUniqueId(), null, "A");
 
-    plugin.getCommand("rankup3").execute(player, "pru", new String[] {"forcerankup", player.getName()});
+    plugin.getCommand("arkonasranks").execute(player, "aru", new String[] {"forcerankup", player.getName()});
 
     assertTrue(groupProvider.inGroup(player.getUniqueId(), "B"));
     assertEquals(11, plugin.getEconomy().getBalance(player), 0.0001);

@@ -5,7 +5,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 /**
- * Rankup3-compatible rendering: only &amp; codes and &amp;#RRGGBB hex, no MiniMessage.
+ * Legacy rendering: only &amp; codes and &amp;#RRGGBB hex, no MiniMessage.
  */
 public class LegacyComponentRenderer implements ComponentRenderer {
 

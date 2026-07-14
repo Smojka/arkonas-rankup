@@ -58,7 +58,7 @@ between groups automatically on rankup (via Vault/LuckPerms).
 | `/maxrankup` | | `rankup.maxrankup` | Rank up as many times as you can afford |
 | `/prestige` `/prestiges` | | `rankup.prestige(s)` | Prestige (enable `prestige: true` + `prestiges.yml`) |
 | `/rebirth` `/rebirths` | | `rankup.rebirth` | Rebirth tier (enable `rebirth.enabled`) |
-| `/arkonasranks …` | `aru`, `rankup3`, `pru` | see below | Admin hub |
+| `/arkonasranks …` | `aru` | see below | Admin hub |
 
 `/aru` subcommands: `reload` (`rankup.reload`) · `forcerankup <p>` / `forceprestige <p>` /
 `rankdown <p>` (`rankup.force`) · `booster <factor> <dur>|clear|status` / `tree` / `placeholders`

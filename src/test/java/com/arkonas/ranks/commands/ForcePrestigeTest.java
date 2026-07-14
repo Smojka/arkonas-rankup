@@ -23,7 +23,7 @@ public class ForcePrestigeTest extends RankupTest {
     // player is in rank A, not the top rank B, so they are in no prestige 'from' group
     groupProvider.transferGroup(player.getUniqueId(), null, "A");
 
-    plugin.getCommand("rankup3").execute(player, "pru",
+    plugin.getCommand("arkonasranks").execute(player, "aru",
         new String[] {"forceprestige", player.getName()});
 
     // pre-fix this path NPE'd before sending anything

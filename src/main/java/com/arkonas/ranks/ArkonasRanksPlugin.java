@@ -199,7 +199,7 @@ public class ArkonasRanksPlugin extends JavaPlugin {
 
     // The advanced menu module wraps the player-facing commands with pop-up
     // inventory screens. It is fully additive: when menus.enabled is absent or
-    // false the plugin behaves exactly like the Rankup3-parity core.
+    // false the plugin behaves exactly like the classic chat-based core.
     boolean menus = config.getBoolean("menus.enabled");
     if (menus) {
       // populate the namespaced-item registry so menu icons like `oraxen:rank_icon` resolve to the
@@ -215,7 +215,7 @@ public class ArkonasRanksPlugin extends JavaPlugin {
 
     if (config.getBoolean("ranks")) {
       if (menus) {
-        // menus override ranks-gui; the console still gets the parity chat list
+        // menus override ranks-gui; the console still gets the plain chat list
         getCommand("ranks").setExecutor(
             new com.arkonas.ranks.menu.commands.MenuRanksCommand(this, menuModule, new RanksCommand(this)));
       } else if (config.getBoolean("ranks-gui")) {
@@ -227,15 +227,15 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       }
     }
     if (config.getBoolean("prestige")) {
-      PrestigeCommand prestigeParity = new PrestigeCommand(this);
+      PrestigeCommand prestigeChat = new PrestigeCommand(this);
       getCommand("prestige").setExecutor(menus
-          ? new com.arkonas.ranks.menu.commands.MenuPrestigeCommand(this, menuModule, prestigeParity)
-          : prestigeParity);
+          ? new com.arkonas.ranks.menu.commands.MenuPrestigeCommand(this, menuModule, prestigeChat)
+          : prestigeChat);
       if (config.getBoolean("prestiges")) {
-        PrestigesCommand prestigesParity = new PrestigesCommand(this);
+        PrestigesCommand prestigesChat = new PrestigesCommand(this);
         getCommand("prestiges").setExecutor(menus
-            ? new com.arkonas.ranks.menu.commands.MenuPrestigesCommand(this, menuModule, prestigesParity)
-            : prestigesParity);
+            ? new com.arkonas.ranks.menu.commands.MenuPrestigesCommand(this, menuModule, prestigesChat)
+            : prestigesChat);
       }
       // companion to /maxrankup: prestige as many times as possible in one pass
       getCommand("maxprestige").setExecutor(
@@ -251,10 +251,10 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       getCommand("rebirths").setExecutor(new com.arkonas.ranks.commands.RebirthsCommand(this));
     }
 
-    RankupCommand rankupParity = new RankupCommand(this);
+    RankupCommand rankupChat = new RankupCommand(this);
     getCommand("rankup").setExecutor(menus
-        ? new com.arkonas.ranks.menu.commands.MenuRankupCommand(this, menuModule, rankupParity)
-        : rankupParity);
+        ? new com.arkonas.ranks.menu.commands.MenuRankupCommand(this, menuModule, rankupChat)
+        : rankupChat);
     getCommand("rankup").setTabCompleter(
         new com.arkonas.ranks.commands.LadderTabCompleter(this, "noconfirm", "top", "gui"));
     getCommand("arkonasranks").setExecutor(new InfoCommand(this, notifier));
@@ -311,7 +311,7 @@ public class ArkonasRanksPlugin extends JavaPlugin {
 
     getServer().getPluginManager().registerEvents(new GuiListener(this), this);
     if (menuModule != null) {
-      // the parity GuiListener stays registered for when menus are disabled
+      // the classic confirmation GuiListener stays registered for when menus are disabled
       getServer().getPluginManager().registerEvents(menuModule.getListener(), this);
     }
     getServer().getPluginManager().registerEvents(

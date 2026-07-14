@@ -14,8 +14,8 @@ import com.arkonas.ranks.menu.screens.RankPathMenu;
 import com.arkonas.ranks.menu.screens.RankupMenu;
 
 /**
- * With menus.enabled: false the plugin must behave exactly like the Rankup3
- * parity core: the confirmation GUI opens for /rankup and /ranks writes to chat.
+ * With menus.enabled: false the plugin must behave exactly like the classic
+ * chat-based core: the confirmation GUI opens for /rankup and /ranks writes to chat.
  */
 public class MenuFallbackTest extends RankupTest {
 
@@ -29,7 +29,7 @@ public class MenuFallbackTest extends RankupTest {
   }
 
   @Test
-  public void rankupOpensParityGui() {
+  public void rankupOpensClassicGui() {
     PlayerMock player = server.addPlayer();
     player.addAttachment(plugin, "rankup.rankup", true);
     groupProvider.transferGroup(player.getUniqueId(), null, "A");
@@ -38,7 +38,7 @@ public class MenuFallbackTest extends RankupTest {
     server.dispatchCommand(player, "rankup");
 
     Inventory top = player.getOpenInventory().getTopInventory();
-    assertTrue(top.getHolder() instanceof Gui, "expected the parity confirmation Gui");
+    assertTrue(top.getHolder() instanceof Gui, "expected the classic confirmation Gui");
     assertFalse(top.getHolder() instanceof RankupMenu);
   }
 
@@ -52,6 +52,6 @@ public class MenuFallbackTest extends RankupTest {
 
     Inventory top = player.getOpenInventory().getTopInventory();
     assertFalse(top != null && top.getHolder() instanceof RankPathMenu);
-    assertNotNull(player.nextMessage(), "expected the parity chat rank listing");
+    assertNotNull(player.nextMessage(), "expected the classic chat rank listing");
   }
 }

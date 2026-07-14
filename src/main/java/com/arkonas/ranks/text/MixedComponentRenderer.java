@@ -25,7 +25,7 @@ public class MixedComponentRenderer implements ComponentRenderer {
       Map.entry('m', "<st>"), Map.entry('n', "<u>"), Map.entry('o', "<i>"),
       Map.entry('r', "<reset>"));
 
-  // &#RRGGBB (Rankup3 style) — also matches with § in place of &
+  // &#RRGGBB (legacy hex style), also matches with § in place of &
   private static final Pattern AMP_HEX = Pattern.compile("[&§]#([0-9a-fA-F]{6})");
   // §x§R§R§G§G§B§B (Bungee style, produced by PAPI expansions)
   private static final Pattern X_HEX = Pattern.compile(
@@ -39,7 +39,7 @@ public class MixedComponentRenderer implements ComponentRenderer {
 
   @Override
   public Component render(String message) {
-    // pure legacy messages keep the exact Rankup3 component shape;
+    // pure legacy messages keep the exact legacy component shape;
     // MiniMessage parsing only happens when a tag is actually present
     if (!MINI_TAG.matcher(message).find()) {
       return LEGACY.render(message);

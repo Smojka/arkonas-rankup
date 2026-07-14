@@ -12,7 +12,7 @@ import com.arkonas.ranks.requirements.Requirement;
 /**
  * The rankup confirmation screen. Reads the player's position in the rankup
  * ladder and delegates the confirm action to {@code RankupHelper#rankup} so the
- * requirement/cooldown re-check happens exactly as in the parity GUI.
+ * requirement/cooldown re-check happens exactly as in the classic confirmation GUI.
  */
 public class RankupMenu extends ConfirmScreen {
 

@@ -13,7 +13,7 @@ locale: tr
 autorankup-interval: 0
 
 # whether /ranks and /prestiges should be enabled (true) or disabled (false)
-# /rankup3 reload will not do anything if this is changed,
+# /aru reload will not do anything if this is changed,
 # you will have to restart your server.
 ranks: true
 # you can alternatively negate the permission rankup.prestiges
@@ -94,7 +94,7 @@ text:
   timeout: 10
 
 # placeholders:
-# https://okx.sh/rankup/Placeholders.html
+# see the PlaceholderAPI section of the README for the full list
 placeholders:
   # format for money. for more information, see
   # https://docs.oracle.com/javase/8/docs/api/java/text/DecimalFormat.html
@@ -132,7 +132,7 @@ shorten:
 
 # how messages are rendered:
 # auto - legacy & codes, &#RRGGBB hex and MiniMessage tags can be mixed (default)
-# legacy - only & codes and &#RRGGBB, exactly like Rankup3
+# legacy - only & codes and &#RRGGBB, no MiniMessage
 # minimessage - only MiniMessage tags
 message-format: auto
 

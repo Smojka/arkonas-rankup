@@ -9,8 +9,7 @@ can be reborn. The rest of the plugin is built on top of that loop. Menus draw t
 icons, effects fire on the group change, the database counts the rankups, and multipliers scale the
 costs.
 
-It is a full reimplementation of [Rankup3 3.15.3](https://github.com/okx-code/Rankup3), so existing
-Rankup3 configs drop in unchanged. Licensed GPL-3.0 (see `LICENSE.txt`).
+Licensed GPL-3.0 (see `LICENSE.txt`).
 
 ---
 
@@ -114,7 +113,7 @@ the config files without re-registering commands.
 
 ### Admin: `/arkonasranks`
 
-Aliases: `/aru`, `/rankup3`, `/pru`.
+Alias: `/aru`.
 
 | Command | Permission | What it does |
 | --- | --- | --- |
@@ -1071,7 +1070,7 @@ one exception would have been `menus.enabled`, which ships as `true` on a fresh 
 added to an existing config it is written as `false` instead, and the plugin says so in the log.
 Switch it on when you are ready for it.
 
-Rankup3 configs drop in as they are. These quirks are preserved on purpose:
+Three behaviours are deliberate and will not change:
 
 - `rankups.toml` silently wins over `rankups.yml`.
 - The first prestige entry has no `rank:` and grants two groups.

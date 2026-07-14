@@ -16,7 +16,7 @@ public class ComandPlaytimeTest extends RankupTest {
     player.setStatistic(Statistic.PLAY_ONE_MINUTE, ticks(10));
 
     player.addAttachment(plugin, "rankup.playtime", true);
-    player.performCommand("pru playtime add " + player.getName() + " 20");
+    player.performCommand("aru playtime add " + player.getName() + " 20");
 
     assertEquals(ticks(30), player.getStatistic(Statistic.PLAY_ONE_MINUTE));
   }
@@ -28,7 +28,7 @@ public class ComandPlaytimeTest extends RankupTest {
     player.setStatistic(Statistic.PLAY_ONE_MINUTE, ticks(20));
 
     player.addAttachment(plugin, "rankup.playtime", true);
-    player.performCommand("pru playtime set " + player.getName() + " 25");
+    player.performCommand("aru playtime set " + player.getName() + " 25");
 
     assertEquals(ticks(25), player.getStatistic(Statistic.PLAY_ONE_MINUTE));
   }
@@ -40,7 +40,7 @@ public class ComandPlaytimeTest extends RankupTest {
     player.setStatistic(Statistic.PLAY_ONE_MINUTE, ticks(5));
 
     player.addAttachment(plugin, "rankup.playtime.get", true);
-    player.performCommand("pru playtime get " + player.getName());
+    player.performCommand("aru playtime get " + player.getName());
 
     player.assertSaid(ChatColor.LIGHT_PURPLE + "You have played for 5 minutes.");
     player.assertNoMoreSaid();

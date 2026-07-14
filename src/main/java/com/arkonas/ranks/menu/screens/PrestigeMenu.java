@@ -13,7 +13,7 @@ import com.arkonas.ranks.requirements.Requirement;
  * The prestige confirmation screen. Shares {@link ConfirmScreen} with
  * {@link RankupMenu}; only the ladder source and the confirm action differ.
  * Confirm delegates to {@code RankupHelper#prestige} for the same re-check
- * contract as the parity GUI.
+ * contract as the classic confirmation GUI.
  */
 public class PrestigeMenu extends ConfirmScreen {
 

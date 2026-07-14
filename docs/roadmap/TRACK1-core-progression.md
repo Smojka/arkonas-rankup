@@ -1,6 +1,6 @@
 # Track 1 — Core Progression
 
-Goal: lift ArkonasRanks from single-ladder Rankup3 parity to a superior progression
+Goal: lift ArkonasRanks from a single-ladder core to a superior progression
 engine. Four features, shipped as back-compat, opt-in milestones. Existing configs keep
 working unchanged; every new capability is off by default.
 

@@ -226,7 +226,7 @@ public class InfoCommand implements TabExecutor {
           if (args[1].equalsIgnoreCase("get") && sender.hasPermission("rankup.playtime.get")) {
             Player player;
             if (args.length > 2) {
-              // pru playtime get Okx
+              // aru playtime get <player>
               player = Bukkit.getPlayer(args[2]);
               if (player == null) {
                 sender.sendMessage(ChatColor.GRAY + "Player not found");

@@ -18,7 +18,7 @@ import com.arkonas.ranks.menu.screens.RankupMenu;
  * {@link MenuTicker} and {@link MenuListener}, exposes the {@code open*}
  * factories used by the command wrappers, and tracks which menus are open.
  *
- * <p>Everything here is additive to the Rankup3-parity core. When
+ * <p>Everything here is additive to the classic chat-based core. When
  * {@code menus.enabled} is false this module is never constructed and the plugin
  * behaves exactly as before.
  */
@@ -103,7 +103,7 @@ public class MenuModule {
     return config.animationEnabled() && config.animationFlag("cooldown-countdown");
   }
 
-  /** Open-reveal transition — opt-in (default off), so parity/existing menus are unchanged. */
+  /** Open-reveal transition, opt-in (default off), so existing menus are unchanged. */
   public boolean openReveal() {
     return config.animationEnabled() && config.animationFlag("open-reveal", false);
   }
