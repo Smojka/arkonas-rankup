@@ -12,6 +12,7 @@ public abstract class Requirement implements Cloneable {
   @Getter
   private String sub;
   private boolean subRequirement;
+  private double perRankFactor = 1.0;
 
   public Requirement(ArkonasRanksPlugin plugin, String name) {
     this(plugin, name, false);
@@ -29,6 +30,12 @@ public abstract class Requirement implements Cloneable {
     this.value = clone.value;
     this.sub = clone.sub;
     this.subRequirement = clone.subRequirement;
+    this.perRankFactor = clone.perRankFactor;
+  }
+
+  /** Per-rank cost multiplier from the rank's {@code cost-multiplier} config key (default 1.0). */
+  public void setPerRankFactor(double perRankFactor) {
+    this.perRankFactor = perRankFactor;
   }
 
   public void setValue(String value) {
@@ -96,9 +103,38 @@ public abstract class Requirement implements Cloneable {
     return subRequirement;
   }
 
+  /**
+   * The player's current cost multiplier (VIP discount, event booster, scheduled sale), or 1.0 when
+   * no multiplier service is available. Currency requirements scale their cost by this so discounts
+   * apply uniformly across money, XP, tokens and vote points.
+   */
+  protected double costFactor(Player player) {
+    double global = plugin.getMultipliers() == null ? 1.0 : plugin.getMultipliers().costFactor(player);
+    return global * perRankFactor;
+  }
+
   public abstract Requirement clone();
 
   public double getTotal(Player player) {
     return 1;
+  }
+
+  /** Requirement names already warned about, so a broken hook logs once, not every tick. */
+  private static final java.util.Set<String> WARNED_HOOK_FAILURES =
+      java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+  /**
+   * Records that this requirement's plugin-hook evaluation threw and was treated as unmet
+   * (fail-closed), logging once per requirement name so a missing/faulty dependency degrades
+   * gracefully during {@code /rankup}, menu renders and placeholder lookups instead of spamming
+   * the console or surfacing as an error every tick.
+   */
+  protected void logHookFailureOnce(Throwable t) {
+    // dedup on getFullName(): getName() is a constant per requirement TYPE (e.g. "placeholder",
+    // "mcmmo"), so keying on it would silence every hook failure after the first of that type
+    if (WARNED_HOOK_FAILURES.add(getFullName())) {
+      plugin.getLogger().warning("Requirement '" + getFullName() + "' failed to evaluate and is being"
+          + " treated as unmet; is its plugin installed and fully loaded? (" + t + ")");
+    }
   }
 }

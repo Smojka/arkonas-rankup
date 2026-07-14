@@ -1,0 +1,10 @@
+Aexample:
+  rank: 'A'
+  next: 'B'
+  requirements:
+    - 'money 50'
+Bexample:
+  rank: 'B'
+  next: 'C'
+  requirements:
+    - 'money 50'

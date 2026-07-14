@@ -1,5 +1,5 @@
 # this is used for letting you know that you need to update/change your config file
-version: 10
+version: 11
 
 # the locale to use for messages
 # all messages can be customised but this allows you to
@@ -12,8 +12,30 @@ locale: en
 # set to 0 to disable
 autorankup-interval: 0
 
+# which economy the 'money' requirement uses.
+#   auto          - prefer Vault, else the first available backend (default)
+#   vault         - Vault (works with EssentialsX, CMI, and most economy plugins)
+#   playerpoints  - PlayerPoints
+#   coinsengine:<currency> - a named CoinsEngine currency, e.g. coinsengine:gold
+# unknown or unavailable backends fall back to auto-detect.
+economy:
+  provider: auto
+
+# what the auto task does each pass (only runs when autorankup-interval > 0).
+# players still need the rankup.auto permission.
+auto:
+  # automatically rank players up
+  rankup: true
+  # automatically prestige players who are at the top rank (needs prestige: true)
+  prestige: true
+  # rank up repeatedly in a single pass until the player can no longer afford it
+  # (false = advance at most one rank per pass, the classic behaviour)
+  max: false
+  # automatically be reborn when eligible (needs rebirth.enabled; checked after rankup/prestige)
+  rebirth: false
+
 # whether /ranks and /prestiges should be enabled (true) or disabled (false)
-# /rankup3 reload will not do anything if this is changed,
+# /aru reload will not do anything if this is changed,
 # you will have to restart your server.
 ranks: true
 # you can alternatively negate the permission rankup.prestiges
@@ -94,7 +116,7 @@ text:
   timeout: 10
 
 # placeholders:
-# https://okx.sh/rankup/Placeholders.html
+# see the PlaceholderAPI section of the README for the full list
 placeholders:
   # format for money. for more information, see
   # https://docs.oracle.com/javase/8/docs/api/java/text/DecimalFormat.html
@@ -108,6 +130,10 @@ placeholders:
   no-prestige: "None"
   # used in the next_rank and next_prestige placeholders when a player is at the highest rank or prestige
   highest-rank: "None"
+  # fallback text for empty leaderboard slots in top_<n>_name / top_<n>_count placeholders
+  # (used by hologram/TAB/scoreboard plugins when the leaderboard has fewer than <n> players)
+  leaderboard-empty-name: ''
+  leaderboard-empty-count: '0'
   # used in the %rankup_status_[rank]% placeholders
   status:
     complete: "Complete"
@@ -132,7 +158,7 @@ shorten:
 
 # how messages are rendered:
 # auto - legacy & codes, &#RRGGBB hex and MiniMessage tags can be mixed (default)
-# legacy - only & codes and &#RRGGBB, exactly like Rankup3
+# legacy - only & codes and &#RRGGBB, no MiniMessage
 # minimessage - only MiniMessage tags
 message-format: auto
 
@@ -153,8 +179,164 @@ database:
 # When enabled, /rankup, /ranks, /prestige, /prestiges and /rankup top open
 # animated pop-up inventory menus instead of writing to chat, and the menu
 # becomes the confirmation screen (ranks-gui and confirmation-type are ignored).
-# The console, /rankup noconfirm and players not in any ladder keep the exact
-# Rankup3-parity behaviour. Set to false for full parity. Menu appearance is
+# The console, /rankup noconfirm and players not in any ladder keep the classic
+# chat behaviour. Set to false to use chat everywhere. Menu appearance is
 # configured in menus.yml.
 menus:
   enabled: true
+
+# Cost formula (optional). Instead of hand-writing a requirement on every rank,
+# generate one from a formula based on the rank's position in the ladder.
+# Ranks that already declare the requirement keep their explicit value unless
+# override is true. Ranks using prestige-style requirement maps are never touched.
+# Variables available in the expression:
+#   {index} - 0-based position of the rank in the ladder (first rank = 0)
+#   {n}     - total number of ranks in the ladder
+#   {prev}  - the cost generated for the previous rank (0 for the first)
+# Operators: + - * / % ^   Functions: min max pow floor ceil round abs sqrt
+cost-formula:
+  enabled: false
+  # the requirement name to generate (money, xp-level, tokenmanager-tokens, ...)
+  requirement: money
+  # e.g. exponential scaling: first rank 1000, each rank 15% dearer
+  expression: "1000 * 1.15 ^ {index}"
+  # decimal places to round to (-1 to disable rounding)
+  round: 2
+  # true = replace an explicit requirement of the same name; false = only fill ranks without one
+  override: false
+
+# Multiple ladders (optional). rankups.yml is always the "default" ladder. To add
+# parallel ladders a player progresses on independently (e.g. a mining track and a
+# combat track), drop extra files in a `ladders/` folder next to this config, one
+# file per ladder using the same format as rankups.yml (yaml or toml). The file name
+# is the ladder id. Players use `/rankup <ladder>` and `/maxrankup <ladder>`; auto
+# rankup advances every ladder. `/rankup` with no argument, the menu and prestige all
+# stay on the default ladder.
+# A ladder may have its own cost formula here; otherwise the global cost-formula above
+# is used:
+# ladders:
+#   mining:
+#     cost-formula:
+#       enabled: true
+#       requirement: money
+#       expression: "500 * 1.2 ^ {index}"
+#       round: 2
+#       override: false
+
+# Rebirth (optional). A progression tier above rankup/prestige: a player who has
+# reached the top can "be reborn", advancing through the rebirth groups below and
+# resetting back to the first rank, in exchange for requirements and reward commands.
+# Commands: /rebirth and /rebirths (permission rankup.rebirth). Disabled by default.
+rebirth:
+  enabled: false
+  # what must be maxed before a rebirth is allowed: top-rank or top-prestige
+  requires: top-rank
+  # the ordered rebirth permission groups; players advance one per rebirth
+  groups:
+    - rebirth1
+    - rebirth2
+    - rebirth3
+  # send the player back to the first rank group after a rebirth
+  reset-ranks: true
+  # also strip all prestige groups on rebirth (reset prestige back to zero)
+  reset-prestige: false
+  # requirements to be reborn (same syntax as rank requirements)
+  requirements:
+    - 'money 1000000'
+  # console commands run on rebirth ({player} and {rebirth} are replaced)
+  commands: []
+  # messages ({player}/{rebirth} placeholders, & colour codes)
+  messages:
+    success: '&aYou have been reborn as &e{rebirth}&a!'
+    requirements-not-met: '&cYou do not meet the requirements to be reborn.'
+    not-at-top: '&cYou must reach the top of your progression before you can be reborn.'
+    maxed: '&cYou have reached the maximum rebirth.'
+
+# Cost multipliers (optional). Scales the money requirement of every rankup.
+# A factor below 1 is a discount, above 1 a surcharge. The effective factor is
+# global * (best permission factor the player has) * (active event booster).
+# Placeholders and menus reflect the discounted cost, and the deduction matches.
+multipliers:
+  global: 1.0
+  # permission node -> factor; the player's lowest matching factor (best discount) wins
+  permissions:
+    rankup.multiplier.vip: 0.9
+    rankup.multiplier.mvp: 0.8
+
+# Recurring cost sales / auto-boosters. Each window applies 'factor' to rankup costs on the given
+# days between server-local 'start' and 'end' (HH:mm, end exclusive). A manual /aru booster overrides
+# these while it is active. 'days': weekday names (MONDAY..SUNDAY) or [ALL]. Overlapping windows use
+# the best (lowest) factor. Starting/stopping the scheduler needs a server restart.
+boosters:
+  schedule: []
+  #  - days: [SATURDAY, SUNDAY]
+  #    start: '18:00'
+  #    end: '20:00'
+  #    factor: 0.5
+
+# Always-on progress display toward the next rank (optional). Placeholders in the
+# text: %percent%, %rank%, %next%, %player%. Toggling this needs a server restart.
+# The exp-bar mirror overwrites the vanilla XP bar fill (not the level).
+progress-display:
+  enabled: false
+  interval-ticks: 20
+  expbar: false
+  bossbar:
+    enabled: false
+    text: '&aNext: %next% &7- &e%percent%%'
+    color: GREEN      # PINK BLUE RED GREEN YELLOW PURPLE WHITE
+    overlay: PROGRESS # PROGRESS NOTCHED_6 NOTCHED_10 NOTCHED_12 NOTCHED_20
+  actionbar:
+    enabled: false
+    text: '&7Progress to %next%: &e%percent%%'
+  # Persistent sidebar toward the next rank. Placeholders: %rank% %next% %percent% %bar% %player%.
+  scoreboard:
+    enabled: false
+    title: '&6&lRankUp'
+    lines:
+      - '&fRank: &e%rank%'
+      - '&fNext: &e%next%'
+      - '&a%bar% &7%percent%%'
+
+# Milestone rewards (optional, needs database.enabled). Runs console commands when
+# a player's cumulative rankup / prestige count reaches a milestone. A specific
+# count in 'at' takes precedence over the 'every N' cadence. Placeholders in the
+# commands: %player%, %count%, %type%.
+milestones:
+  enabled: false
+  rankup:
+    # reward every N rankups (0 = off)
+    every: 25
+    every-commands:
+      - 'broadcast &e%player% &7reached &a%count% &7rankups!'
+    # specific milestone counts -> commands
+    at:
+      100:
+        - 'give %player% diamond 16'
+        - 'broadcast &6%player% &7hit &b100 rankups&7!'
+  prestige:
+    every: 0
+    every-commands: []
+    at: {}
+
+# Announce rankups/prestiges to Discord via DiscordSRV (softdepend). Off by default.
+# 'channel' is a DiscordSRV *game* channel name (as in its config.yml linking), not a channel id.
+# Placeholders: %player% %from% %to% %type%. Leave a message blank to skip that event type.
+discord:
+  enabled: false
+  channel: global
+  rankup-message: '**%player%** ranked up: %from% -> %to%'
+  prestige-message: '**%player%** prestiged: %from% -> %to%'
+
+# Citizens NPC rankup (softdepend). Right-click an NPC to run commands as the clicker.
+# Off by default. Prefix a line with [console] to run it from console (default is as the player);
+# %player% is replaced. Each entry is a single command or a list of commands.
+citizens:
+  enabled: false
+  # commands for NPCs whose id is not listed under 'npcs' (empty = ignore those NPCs)
+  default-commands: []
+  npcs: {}
+    # 0: maxrankup
+    # 1:
+    #   - 'rankup'
+    #   - '[console] broadcast &e%player% used the rankup NPC!'

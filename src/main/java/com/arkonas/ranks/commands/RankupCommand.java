@@ -47,6 +47,15 @@ public class RankupCommand implements CommandExecutor {
     }
     Player player = (Player) sender;
 
+    // /rankup <ladder> operates directly on a named extra ladder (requirements and
+    // messages still apply). The menu/confirm flow stays on the default ladder.
+    if (args.length > 0 && plugin.getLadders() != null
+        && !args[0].equalsIgnoreCase(com.arkonas.ranks.ladder.LadderRegistry.DEFAULT)
+        && plugin.getLadders().has(args[0])) {
+      plugin.getHelper().rankup(player, plugin.getLadders().get(args[0]));
+      return true;
+    }
+
     Rankups rankups = plugin.getRankups();
     if (!plugin.getHelper().checkRankup(player)) {
       return true;

@@ -18,7 +18,7 @@ public class PrestigeSerialized extends RankSerialized {
       List<String> commands, List<String> requirements,
       Map<String, List<String>> prestigeRequirements,
       Map<String, String> messages, String from, String to) {
-    super(rank, next, displayName, commands, requirements, prestigeRequirements, messages);
+    super(rank, next, displayName, commands, requirements, prestigeRequirements, messages, 1.0);
     this.from = from;
     this.to = to;
   }

@@ -1,0 +1,6 @@
+# ignore all downloaded/generated server files; keep only the scripts + guide
+*
+!.gitignore
+!setup.sh
+!run.sh
+!HOW-TO-USE.md

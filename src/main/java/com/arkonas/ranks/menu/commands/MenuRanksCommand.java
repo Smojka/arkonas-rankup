@@ -10,19 +10,19 @@ import com.arkonas.ranks.menu.MenuModule;
 
 /**
  * Menu wrapper for {@code /ranks}. Players get the rank path menu; the console
- * falls through to the wrapped parity executor (the chat listing).
+ * falls through to the wrapped chat executor (the chat listing).
  */
 @RequiredArgsConstructor
 public class MenuRanksCommand implements CommandExecutor {
 
   private final ArkonasRanksPlugin plugin;
   private final MenuModule menu;
-  private final CommandExecutor parity;
+  private final CommandExecutor chat;
 
   @Override
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
     if (!(sender instanceof Player)) {
-      return parity.onCommand(sender, command, label, args);
+      return chat.onCommand(sender, command, label, args);
     }
     Player player = (Player) sender;
     if (plugin.error(player)) {

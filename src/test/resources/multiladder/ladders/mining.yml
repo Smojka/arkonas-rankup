@@ -1,0 +1,10 @@
+Mine1:
+  rank: 'mine1'
+  next: 'mine2'
+  requirements:
+    - 'money 50'
+Mine2:
+  rank: 'mine2'
+  next: 'mine3'
+  requirements:
+    - 'money 50'

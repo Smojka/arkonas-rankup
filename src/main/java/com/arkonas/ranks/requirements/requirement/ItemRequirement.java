@@ -38,6 +38,12 @@ public class ItemRequirement extends ProgressiveRequirement {
     return new ItemRequirement(this);
   }
 
+  /** Effective item count after any active cost multiplier, so a sale discounts item costs too. */
+  @Override
+  public double getTotal(Player player) {
+    return getValueDouble() * costFactor(player);
+  }
+
   @Override
   public double getProgress(Player player) {
     PlayerInventory inventory = player.getInventory();

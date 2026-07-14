@@ -46,6 +46,14 @@ public abstract class AbstractMenu implements InventoryHolder {
   private int homeSlot = -1;
   private int closeSlot = -1;
 
+  // open-reveal transition state
+  private ItemStack[] revealItems;
+  private boolean revealing;
+  // frame at which content became fully visible (== openedFrame unless a reveal delayed it);
+  // content animations (e.g. the confirm progress-fill) should key their step off this
+  @Getter
+  private long revealDoneFrame;
+
   protected AbstractMenu(MenuModule module, Player player, AbstractMenu parent, int rows) {
     this.module = module;
     this.plugin = module.getPlugin();
@@ -87,8 +95,17 @@ public abstract class AbstractMenu implements InventoryHolder {
   /** Builds the inventory and shows it to the player. */
   public final void open() {
     this.openedFrame = module.currentFrame();
+    this.revealDoneFrame = this.openedFrame;
     this.inventory = Bukkit.createInventory(this, size(), title());
     layout();
+    if (module.openReveal()) {
+      // snapshot the built grid, then blank the inventory so the ticker can wipe it in
+      this.revealItems = inventory.getContents().clone();
+      this.revealing = true;
+      for (int slot = 0; slot < size(); slot++) {
+        inventory.setItem(slot, theme.borderBase());
+      }
+    }
     module.register(this);
     player.openInventory(inventory);
     theme.playSound(player, "open");
@@ -102,6 +119,9 @@ public abstract class AbstractMenu implements InventoryHolder {
     if (inventory == null) {
       return;
     }
+    // an explicit state refresh cancels any in-progress reveal and shows the fresh grid now
+    revealing = false;
+    revealItems = null;
     inventory.clear();
     layout();
   }
@@ -131,10 +151,46 @@ public abstract class AbstractMenu implements InventoryHolder {
 
   /** Called by the ticker each frame while this menu is open. */
   final void tick(long frame) {
+    if (revealing) {
+      // reveal owns the whole grid until complete, so border-chase/fill start only after
+      if (advanceReveal(frame)) {
+        return;
+      }
+      revealing = false;
+      revealItems = null;
+      revealDoneFrame = frame; // content animations key their step off completion
+    }
     if (module.borderChase() && ringSlots.length > 0) {
       animateBorder(frame);
     }
     onTick(frame);
+  }
+
+  /**
+   * Reveals the pre-built grid one row-major band per frame. Only sets the newly revealed slots to
+   * their final (pre-built) items; already-revealed slots are untouched and not-yet-revealed slots
+   * keep the base pane placed at {@link #open()}. Returns true while the reveal is still running.
+   */
+  private boolean advanceReveal(long frame) {
+    int speed = Math.max(1, module.openRevealSpeed());
+    long elapsed = frame - openedFrame; // first tick after open() = 1
+    int revealed = (int) Math.min(size(), Math.max(0, elapsed) * speed);
+    for (int slot = 0; slot < revealed; slot++) {
+      inventory.setItem(slot, revealItems[slot]);
+    }
+    return revealed < size();
+  }
+
+  /** Snaps the reveal to fully visible (used when the player clicks mid-reveal). */
+  private void finishReveal() {
+    if (revealItems != null) {
+      for (int slot = 0; slot < size() && slot < revealItems.length; slot++) {
+        inventory.setItem(slot, revealItems[slot]);
+      }
+      revealDoneFrame = module.currentFrame();
+    }
+    revealing = false;
+    revealItems = null;
   }
 
   private void animateBorder(long frame) {
@@ -183,6 +239,12 @@ public abstract class AbstractMenu implements InventoryHolder {
   }
 
   final void onClick(int slot, ClickType click) {
+    // a click during the reveal snaps the grid fully visible and is otherwise swallowed, so a
+    // click on a not-yet-revealed slot can never fire a hidden confirm/nav action
+    if (revealing) {
+      finishReveal();
+      return;
+    }
     if (slot == closeSlot) {
       theme.playSound(player, "click");
       defer(player::closeInventory);

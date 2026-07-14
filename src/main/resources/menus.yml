@@ -2,9 +2,9 @@
 #
 # These pop-up inventory menus replace the chat output of /rankup, /ranks,
 # /prestige, /prestiges and /rankup top when menus.enabled (config.yml) is true.
-# While the menus are active the parity settings ranks-gui and confirmation-type
-# are ignored (the menu is the confirmation screen). Set menus.enabled: false in
-# config.yml to return to exact Rankup3 parity.
+# While the menus are active the ranks-gui and confirmation-type settings are
+# ignored (the menu is the confirmation screen). Set menus.enabled: false in
+# config.yml to go back to the classic chat output.
 #
 # All item names/lore support legacy & codes, &#RRGGBB hex and MiniMessage tags
 # (the message-format setting in config.yml applies here too). The wording lives
@@ -19,6 +19,10 @@ animation:
   progress-fill: true
   confirm-pulse: true
   cooldown-countdown: true
+  # open-reveal: wipe the menu in when it opens (off by default). speed = slots
+  # revealed per frame.
+  open-reveal: false
+  open-reveal-speed: 6
 
 theme:
   # gradient endpoints used for menu titles and accents
@@ -41,6 +45,14 @@ theme:
     filled-char: '▰'
     empty-char: '▱'
     length: 10
+    # bar style: classic (filled/empty chars), smooth (eighth-block sub-cells),
+    # or gradient (hex gradient over the filled cells).
+    # smooth/gradient need message-format auto or minimessage (config.yml).
+    style: classic
+    gradient:
+      from: '#3DDC84'
+      to: '#00E5FF'
+      empty: '#8A8F98'
   # UI sounds (the rankup/prestige success sound lives in effects.yml, not here)
   sounds:
     open: block.note_block.pling
@@ -48,8 +60,14 @@ theme:
     page: item.book.page_turn
     deny: block.note_block.bass
 
-# requirement name -> icon material. Resolution: exact match, then the name with
-# a trailing 'h' stripped (the hold variants share their icon), then default.
+# requirement name -> icon. Resolution: exact match, then the name with a trailing
+# 'h' stripped (the hold variants share their icon), then default.
+# Each entry is either a material name, or a section for modern resource-pack icons:
+#   money:
+#     material: PLAYER_HEAD          # base item
+#     custom-model-data: 1001        # resource-pack model (Oraxen/ItemsAdder/Nexo pack)
+#     head-texture: <player-or-base64>  # for PLAYER_HEAD icons
+#     glow: false
 requirement-icons:
   default: PAPER
   money: GOLD_INGOT

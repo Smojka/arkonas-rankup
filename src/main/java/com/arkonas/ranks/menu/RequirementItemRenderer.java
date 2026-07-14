@@ -39,7 +39,7 @@ public class RequirementItemRenderer {
   public ItemStack render(Player player, Requirement requirement, int barSegments) {
     MenuTheme theme = module.getTheme();
     MenuText text = module.getText();
-    Material material = module.getIcons().forRequirement(requirement.getName());
+    MenuIcon icon = module.getIcons().iconFor(requirement.getName());
     boolean met = requirement.check(player);
     String colour = met ? theme.success() : theme.danger();
 
@@ -53,7 +53,12 @@ public class RequirementItemRenderer {
       double progress = Math.max(0, total - remaining);
       double fraction = total <= 0 ? 1 : progress / total;
       int filled = barSegments >= 0 ? barSegments : theme.progressBar().filled(fraction);
-      String bar = theme.progressBar().partialBar(filled);
+      // animated frames advance whole cells, so drive smooth/gradient off filled/length there;
+      // the static (settled) frame uses the true fraction for sub-cell smoothing.
+      double barFraction = barSegments >= 0
+          ? (double) filled / theme.progressBar().length()
+          : fraction;
+      String bar = theme.renderBar(filled, barFraction);
       int percent = ProgressBar.percent(fraction);
 
       boolean money = isMoney(requirement.getName());
@@ -73,7 +78,7 @@ public class RequirementItemRenderer {
         ? text.raw("rankup.requirement-met", "&a✔ Requirement met")
         : text.raw("rankup.requirement-unmet", "&c✖ Not met yet")));
 
-    return MenuItems.build(material, name, lore, met);
+    return icon.build(name, lore, met);
   }
 
   /** The number of filled bar segments for a requirement's actual progress. */

@@ -45,4 +45,11 @@ public class ListRankRequirements implements RankRequirements {
       }
     }
   }
+
+  @Override
+  public void setPerRankFactor(double factor) {
+    for (Requirement requirement : requirements) {
+      requirement.setPerRankFactor(factor);
+    }
+  }
 }

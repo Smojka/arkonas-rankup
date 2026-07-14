@@ -16,6 +16,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.java.JavaPluginLoader;
 import com.arkonas.ranks.commands.InfoCommand;
+import com.arkonas.ranks.config.ConfigMigrator;
 import com.arkonas.ranks.commands.MaxRankupCommand;
 import com.arkonas.ranks.commands.PrestigeCommand;
 import com.arkonas.ranks.commands.PrestigesCommand;
@@ -77,6 +78,8 @@ import com.arkonas.ranks.requirements.requirement.towny.TownyResidentRequirement
 import com.arkonas.ranks.requirements.requirement.votingplugin.VotingPluginPointsDeductibleRequirement;
 import com.arkonas.ranks.requirements.requirement.votingplugin.VotingPluginPointsRequirement;
 import com.arkonas.ranks.requirements.requirement.votingplugin.VotingPluginVotesRequirement;
+import com.arkonas.ranks.formula.CostFormula;
+import com.arkonas.ranks.formula.CostFormulaExpander;
 import com.arkonas.ranks.serialization.RankSerialized;
 import com.arkonas.ranks.serialization.ShadowDeserializer;
 import com.arkonas.ranks.serialization.YamlDeserializer;
@@ -86,13 +89,21 @@ import com.arkonas.ranks.util.VersionChecker;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ArkonasRanksPlugin extends JavaPlugin {
 
-  public static final int CONFIG_VERSION = 10;
+  // 11: the next-gen sections (auto, cost-formula, rebirth, multipliers, boosters, progress-display,
+  // milestones, economy, discord, citizens). migrateConfig() adds them to an older file in place.
+  public static final int CONFIG_VERSION = 11;
 
   @Getter
   private GroupProvider permissions;
@@ -110,7 +121,21 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   @Getter
   private Rankups rankups;
   @Getter
+  private com.arkonas.ranks.ladder.LadderRegistry ladders;
+  @Getter
   private Prestiges prestiges;
+  @Getter
+  private com.arkonas.ranks.rebirth.RebirthManager rebirth;
+  @Getter
+  private com.arkonas.ranks.multiplier.MultiplierService multipliers;
+  @Getter
+  private com.arkonas.ranks.progress.ProgressDisplay progressDisplay;
+  /** The scheduler currently driving recurring cost sales, if any (tracked so reload can restart it). */
+  private com.arkonas.ranks.multiplier.SaleScheduler saleScheduler;
+  @Getter
+  private com.arkonas.ranks.milestone.MilestoneService milestones;
+  @Getter
+  private com.arkonas.ranks.discord.DiscordAnnouncer discordAnnouncer;
   @Getter
   private Placeholders placeholders;
   @Getter
@@ -127,7 +152,8 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   protected AutoRankup autoRankup = new AutoRankup(this);
   private String errorMessage;
   private PermissionManager permissionManager = new VaultPermissionManager(this);
-  private EconomyProvider economyProvider = new VaultEconomyProvider();
+  private EconomyProvider economyProvider =
+      new com.arkonas.ranks.economy.ConfigurableEconomyProvider(this);
 
   public ArkonasRanksPlugin() {
     super();
@@ -173,9 +199,12 @@ public class ArkonasRanksPlugin extends JavaPlugin {
 
     // The advanced menu module wraps the player-facing commands with pop-up
     // inventory screens. It is fully additive: when menus.enabled is absent or
-    // false the plugin behaves exactly like the Rankup3-parity core.
+    // false the plugin behaves exactly like the classic chat-based core.
     boolean menus = config.getBoolean("menus.enabled");
     if (menus) {
+      // populate the namespaced-item registry so menu icons like `oraxen:rank_icon` resolve to the
+      // real custom item (falls back to a plain material for any plugin that is absent)
+      com.arkonas.ranks.menu.items.NamespacedItemHooks.install(getLogger());
       menuModule = new com.arkonas.ranks.menu.MenuModule(this);
       if (config.getBoolean("ranks-gui")
           || "gui".equalsIgnoreCase(config.getString("confirmation-type", ""))) {
@@ -186,7 +215,7 @@ public class ArkonasRanksPlugin extends JavaPlugin {
 
     if (config.getBoolean("ranks")) {
       if (menus) {
-        // menus override ranks-gui; the console still gets the parity chat list
+        // menus override ranks-gui; the console still gets the plain chat list
         getCommand("ranks").setExecutor(
             new com.arkonas.ranks.menu.commands.MenuRanksCommand(this, menuModule, new RanksCommand(this)));
       } else if (config.getBoolean("ranks-gui")) {
@@ -198,25 +227,36 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       }
     }
     if (config.getBoolean("prestige")) {
-      PrestigeCommand prestigeParity = new PrestigeCommand(this);
+      PrestigeCommand prestigeChat = new PrestigeCommand(this);
       getCommand("prestige").setExecutor(menus
-          ? new com.arkonas.ranks.menu.commands.MenuPrestigeCommand(this, menuModule, prestigeParity)
-          : prestigeParity);
+          ? new com.arkonas.ranks.menu.commands.MenuPrestigeCommand(this, menuModule, prestigeChat)
+          : prestigeChat);
       if (config.getBoolean("prestiges")) {
-        PrestigesCommand prestigesParity = new PrestigesCommand(this);
+        PrestigesCommand prestigesChat = new PrestigesCommand(this);
         getCommand("prestiges").setExecutor(menus
-            ? new com.arkonas.ranks.menu.commands.MenuPrestigesCommand(this, menuModule, prestigesParity)
-            : prestigesParity);
+            ? new com.arkonas.ranks.menu.commands.MenuPrestigesCommand(this, menuModule, prestigesChat)
+            : prestigesChat);
       }
+      // companion to /maxrankup: prestige as many times as possible in one pass
+      getCommand("maxprestige").setExecutor(
+          new com.arkonas.ranks.commands.MaxPrestigeCommand(this));
     }
     if (config.getBoolean("max-rankup.enabled")) {
       getCommand("maxrankup").setExecutor(new MaxRankupCommand(this));
+      getCommand("maxrankup").setTabCompleter(new com.arkonas.ranks.commands.LadderTabCompleter(this));
     }
 
-    RankupCommand rankupParity = new RankupCommand(this);
+    if (config.getBoolean("rebirth.enabled")) {
+      getCommand("rebirth").setExecutor(new com.arkonas.ranks.commands.RebirthCommand(this));
+      getCommand("rebirths").setExecutor(new com.arkonas.ranks.commands.RebirthsCommand(this));
+    }
+
+    RankupCommand rankupChat = new RankupCommand(this);
     getCommand("rankup").setExecutor(menus
-        ? new com.arkonas.ranks.menu.commands.MenuRankupCommand(this, menuModule, rankupParity)
-        : rankupParity);
+        ? new com.arkonas.ranks.menu.commands.MenuRankupCommand(this, menuModule, rankupChat)
+        : rankupChat);
+    getCommand("rankup").setTabCompleter(
+        new com.arkonas.ranks.commands.LadderTabCompleter(this, "noconfirm", "top", "gui"));
     getCommand("arkonasranks").setExecutor(new InfoCommand(this, notifier));
     effectsListener = new com.arkonas.ranks.effects.EffectsListener(this);
     getServer().getPluginManager().registerEvents(effectsListener, this);
@@ -226,6 +266,12 @@ public class ArkonasRanksPlugin extends JavaPlugin {
             config.getConfigurationSection("database"));
         getServer().getPluginManager().registerEvents(
             new com.arkonas.ranks.data.StatsListener(stats), this);
+        // milestone rewards ride on the stats counts (needs the database enabled)
+        milestones = com.arkonas.ranks.milestone.MilestoneService.fromConfig(
+            this, config.getConfigurationSection("milestones"));
+        if (milestones.isEnabled()) {
+          stats.setMilestoneHook(milestones);
+        }
       } catch (Exception e) {
         getLogger().log(java.util.logging.Level.SEVERE,
             "Could not initialise the statistics database; /rankup top and"
@@ -233,9 +279,39 @@ public class ArkonasRanksPlugin extends JavaPlugin {
         stats = null;
       }
     }
+    // Discord announcements (opt-in). Resolve the DiscordSRV adapter only when configured on,
+    // so servers without the dependency never pay the reflection lookup.
+    com.arkonas.ranks.discord.DiscordAnnouncer announcer =
+        com.arkonas.ranks.discord.DiscordAnnouncer.fromConfig(
+            config.getConfigurationSection("discord"),
+            com.arkonas.ranks.discord.DiscordSrvSender.tryCreate(getLogger()));
+    if (announcer.isEnabled()) {
+      discordAnnouncer = announcer;
+      getServer().getPluginManager().registerEvents(
+          new com.arkonas.ranks.discord.DiscordListener(announcer), this);
+    } else if (config.getBoolean("discord.enabled", false)
+        && !getServer().getPluginManager().isPluginEnabled("DiscordSRV")) {
+      // DiscordSRV present but adapter failed -> DiscordSrvSender already logged the real reason
+      getLogger().info("Discord announcements are enabled in config but DiscordSRV was not found;"
+          + " skipping the hook.");
+    }
+
+    // Citizens NPC rankup (opt-in). Registered by reflection, so no Citizens compile dependency.
+    com.arkonas.ranks.citizens.NpcRankupSettings npcSettings =
+        com.arkonas.ranks.citizens.NpcRankupSettings.fromConfig(
+            config.getConfigurationSection("citizens"));
+    if (npcSettings.isEnabled()) {
+      if (com.arkonas.ranks.citizens.CitizensHook.register(this, npcSettings)) {
+        getLogger().info("Citizens NPC rankup hook enabled.");
+      } else {
+        getLogger().info("Citizens NPC rankup is enabled in config but Citizens was not found;"
+            + " skipping the hook.");
+      }
+    }
+
     getServer().getPluginManager().registerEvents(new GuiListener(this), this);
     if (menuModule != null) {
-      // the parity GuiListener stays registered for when menus are disabled
+      // the classic confirmation GuiListener stays registered for when menus are disabled
       getServer().getPluginManager().registerEvents(menuModule.getListener(), this);
     }
     getServer().getPluginManager().registerEvents(
@@ -243,6 +319,10 @@ public class ArkonasRanksPlugin extends JavaPlugin {
 
     placeholders = new Placeholders(this);
     placeholders.register();
+
+    // The live progress display and the recurring-sale scheduler are wired inside refreshRanks()
+    // (see wireLiveComponents): their backing services are (re)built there, on the deferred boot
+    // tick and on every /aru reload, so wiring them here in onEnable would race that assignment.
   }
 
 
@@ -251,6 +331,12 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     closeInventories();
     if (menuModule != null) {
       menuModule.closeAll();
+    }
+    // hide any persistent boss bars / restore sidebars so they don't linger after a disable
+    if (progressDisplay != null) {
+      for (org.bukkit.entity.Player online : Bukkit.getOnlinePlayers()) {
+        progressDisplay.clear(online);
+      }
     }
     if (placeholders != null) {
       placeholders.unregister();
@@ -263,6 +349,12 @@ public class ArkonasRanksPlugin extends JavaPlugin {
 
   public void reload(boolean init) {
     errorMessage = null;
+
+    // bring pre-existing configs up to date with the shipped defaults before anything reads them,
+    // so options added by a plugin update actually appear instead of the feature staying silently off
+    migrateConfig("config.yml");
+    migrateConfig("effects.yml");
+    migrateConfig("menus.yml");
 
     config = loadConfig("config.yml");
 
@@ -293,12 +385,13 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     }
 
     if (config.getInt("version") < CONFIG_VERSION) {
-      getLogger().severe("You are using an outdated config!");
+      // migrateConfig() normally adds the missing options and stamps the version on load, so this
+      // only fires if that could not write the file (permissions, disk) — hence the manual fallback
+      getLogger().severe("Your config is outdated and could not be updated automatically!");
       getLogger().severe("This means that some things might not work!");
-      getLogger().severe("To update, please rename ALL your config files (or the folder they are in),");
-      getLogger().severe("and run /aru reload to generate a new config file.");
-      getLogger().severe("If that does not work, restart your server.");
-      getLogger().severe("You may then copy in your config values manually from the old config.");
+      getLogger().severe("Check that the plugin can write to its folder, then run /aru reload.");
+      getLogger().severe("Failing that, rename ALL your config files (or the folder they are in) and");
+      getLogger().severe("restart to generate fresh ones, then copy your values back in.");
     }
 
     componentRenderer = com.arkonas.ranks.text.ComponentRenderer.of(config.getString("message-format", "auto"));
@@ -386,6 +479,10 @@ public class ArkonasRanksPlugin extends JavaPlugin {
 
   public void refreshRanks() {
     try {
+      // tear down the previously-wired live components before rebuilding their services below,
+      // so a /aru reload does not leak the old boss bars / sidebars or double-schedule the tasks
+      teardownLiveComponents();
+
       registerRequirements();
       Bukkit.getPluginManager().callEvent(new RankupRegisterEvent(this));
 
@@ -396,14 +493,78 @@ public class ArkonasRanksPlugin extends JavaPlugin {
         prestiges = null;
       }
 
-      rankups = new Rankups(this, loadRankupConfig("rankups"));
+      List<RankSerialized> rankupConfig = loadRankupConfig("rankups");
+      CostFormula costFormula = CostFormula.fromConfig(getConfig().getConfigurationSection("cost-formula"));
+      rankupConfig = CostFormulaExpander.expand(costFormula, rankupConfig);
+      rankups = new Rankups(this, rankupConfig);
       // check rankups are not in an infinite loop
 //      rankups.getOrderedList();
 
+      ladders = new com.arkonas.ranks.ladder.LadderRegistry();
+      ladders.put(com.arkonas.ranks.ladder.LadderRegistry.DEFAULT, rankups);
+      loadExtraLadders();
+
+      rebirth = com.arkonas.ranks.rebirth.RebirthManager.fromConfig(
+          this, getConfig().getConfigurationSection("rebirth"));
+
+      multipliers = com.arkonas.ranks.multiplier.MultiplierService.fromConfig(
+          getConfig().getConfigurationSection("multipliers"));
+
+      progressDisplay = com.arkonas.ranks.progress.ProgressDisplay.fromConfig(
+          this, getConfig().getConfigurationSection("progress-display"));
+
+      // now that multipliers + progressDisplay are (re)built, register + schedule them
+      wireLiveComponents();
 
     } catch (RuntimeException e) {
       this.errorMessage = e.getClass().getName() + ": " + e.getMessage();
       e.printStackTrace();
+    }
+  }
+
+  /**
+   * Registers and schedules the live progress display and the recurring cost-sale scheduler after
+   * their services have been (re)built in {@link #refreshRanks()}. Both are opt-in and stay off
+   * unless configured. Called on the deferred boot tick and on every {@code /aru reload}; the
+   * matching {@link #teardownLiveComponents()} runs first so nothing is double-scheduled.
+   */
+  private void wireLiveComponents() {
+    if (progressDisplay != null) {
+      getServer().getPluginManager().registerEvents(progressDisplay, this);
+      long interval = progressDisplay.intervalTicks(config.getConfigurationSection("progress-display"));
+      progressDisplay.runTaskTimer(this, interval, interval);
+    }
+
+    com.arkonas.ranks.multiplier.SaleSchedule saleSchedule =
+        com.arkonas.ranks.multiplier.SaleSchedule.fromConfig(config.getConfigurationSection("boosters"));
+    if (!saleSchedule.isEmpty() && multipliers != null) {
+      saleScheduler = new com.arkonas.ranks.multiplier.SaleScheduler(saleSchedule, multipliers);
+      saleScheduler.start(this);
+    }
+  }
+
+  /**
+   * Unregisters, cancels and clears the live components wired by {@link #wireLiveComponents()} so a
+   * reload can rebuild them cleanly. Safe to call when nothing was wired (first boot).
+   */
+  private void teardownLiveComponents() {
+    if (progressDisplay != null) {
+      org.bukkit.event.HandlerList.unregisterAll(progressDisplay);
+      try {
+        progressDisplay.cancel();
+      } catch (IllegalStateException ignored) {
+        // was never scheduled (e.g. an error aborted the previous refresh)
+      }
+      for (Player online : Bukkit.getOnlinePlayers()) {
+        progressDisplay.clear(online);
+      }
+    }
+    if (saleScheduler != null) {
+      try {
+        saleScheduler.cancel();
+      } catch (IllegalStateException ignored) {
+      }
+      saleScheduler = null;
     }
   }
 
@@ -442,12 +603,137 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     return YamlDeserializer.deserialize(YamlConfiguration.loadConfiguration(ymlFile));
   }
 
+  /**
+   * Loads any additional rankup ladders from files in the {@code ladders/} folder into the ladder
+   * registry. Each file (yaml or toml, toml winning on a name clash) becomes a ladder keyed by its
+   * file name; the reserved id {@code default} is skipped. A per-ladder cost formula may be set at
+   * {@code ladders.<id>.cost-formula} in config.yml, otherwise the global {@code cost-formula}
+   * applies. A single malformed ladder is logged and skipped, never aborting startup.
+   */
+  private void loadExtraLadders() {
+    File dir = new File(getDataFolder(), "ladders");
+    if (!dir.isDirectory()) {
+      return;
+    }
+    File[] files = dir.listFiles((d, fileName) -> {
+      String lower = fileName.toLowerCase();
+      return lower.endsWith(".yml") || lower.endsWith(".toml");
+    });
+    if (files == null || files.length == 0) {
+      return;
+    }
+
+    java.util.Map<String, File> ymlById = new java.util.HashMap<>();
+    java.util.Map<String, File> tomlById = new java.util.HashMap<>();
+    for (File file : files) {
+      String name = file.getName();
+      String lower = name.toLowerCase();
+      String id = lower.replaceAll("\\.(yml|toml)$", "");
+      if (id.equals(com.arkonas.ranks.ladder.LadderRegistry.DEFAULT)) {
+        getLogger().warning("Ignoring ladders/" + name
+            + ": the id 'default' is reserved for rankups.yml");
+        continue;
+      }
+      (lower.endsWith(".toml") ? tomlById : ymlById).put(id, file);
+    }
+
+    java.util.Set<String> ids = new java.util.TreeSet<>();
+    ids.addAll(ymlById.keySet());
+    ids.addAll(tomlById.keySet());
+    for (String id : ids) {
+      File file = tomlById.getOrDefault(id, ymlById.get(id));
+      try {
+        List<RankSerialized> cfg = loadLadderFile(file);
+        org.bukkit.configuration.ConfigurationSection ladderFormula =
+            getConfig().getConfigurationSection("ladders." + id + ".cost-formula");
+        CostFormula formula = CostFormula.fromConfig(ladderFormula != null ? ladderFormula
+            : getConfig().getConfigurationSection("cost-formula"));
+        cfg = CostFormulaExpander.expand(formula, cfg);
+        ladders.put(id, new Rankups(this, cfg));
+        getLogger().info("Loaded rankup ladder '" + id + "' (" + cfg.size() + " ranks).");
+      } catch (Exception e) {
+        getLogger().log(java.util.logging.Level.SEVERE,
+            "Failed to load ladder file " + file.getName() + "; skipping it", e);
+      }
+    }
+  }
+
+  private List<RankSerialized> loadLadderFile(File file) throws FileNotFoundException {
+    if (file.getName().toLowerCase().endsWith(".toml")) {
+      return ShadowDeserializer.deserialize(
+          TomlFormat.instance().createParser().parse(new FileReader(file)));
+    }
+    return YamlDeserializer.deserialize(YamlConfiguration.loadConfiguration(file));
+  }
+
   private FileConfiguration loadConfig(String name) {
     File file = new File(getDataFolder(), name);
     if (!file.exists()) {
       saveResource(name, false);
     }
     return YamlConfiguration.loadConfiguration(file);
+  }
+
+  /**
+   * Adds any option the shipped default has and the user's file lacks. saveResource only writes a
+   * file when it is absent, so without this a server that predates a feature never gets its keys and
+   * the feature stays silently off (this is how progress-display, boosters, discord, citizens,
+   * economy, milestones, multipliers, rebirth, cost-formula and auto were all missing in the wild).
+   * Existing values are never touched; a one-off backup is written before the first rewrite.
+   */
+  private void migrateConfig(String name) {
+    File file = new File(getDataFolder(), name);
+    if (!file.exists()) {
+      saveResource(name, false);
+      return; // freshly written from the jar: already complete
+    }
+
+    InputStream resource = getResource(name);
+    if (resource == null) {
+      return;
+    }
+
+    try {
+      FileConfiguration user = YamlConfiguration.loadConfiguration(file);
+      FileConfiguration defaults;
+      try (Reader reader = new InputStreamReader(resource, StandardCharsets.UTF_8)) {
+        defaults = YamlConfiguration.loadConfiguration(reader);
+      }
+
+      // menus.enabled ships as true but an absent key reads as false, so adopting the shipped
+      // default would silently move an existing server onto the menu UI on a jar update. Add it
+      // switched off; the admin turns it on when they choose to.
+      Map<String, Object> onUpgrade = name.equals("config.yml")
+          ? Map.of("menus.enabled", false)
+          : Map.of();
+
+      List<String> added = ConfigMigrator.merge(user, defaults, onUpgrade);
+      boolean stale = name.equals("config.yml") && user.getInt("version") < CONFIG_VERSION;
+      if (added.isEmpty() && !stale) {
+        return;
+      }
+      if (stale) {
+        user.set("version", CONFIG_VERSION);
+      }
+      if (added.contains("menus.enabled")) {
+        getLogger().info("The animated menus are available but left disabled so your current"
+            + " /rankup and /ranks behaviour is unchanged — set menus.enabled: true to use them.");
+      }
+
+      File backup = new File(getDataFolder(), name + ".backup");
+      if (!backup.exists()) {
+        Files.copy(file.toPath(), backup.toPath());
+      }
+      user.save(file);
+
+      if (!added.isEmpty()) {
+        getLogger().info("Updated " + name + ": added " + added.size() + " missing option(s) across "
+            + ConfigMigrator.roots(added) + ". Your existing values were kept; the previous file is"
+            + " saved as " + name + ".backup");
+      }
+    } catch (IOException e) {
+      getLogger().warning("Could not update " + name + " with the newest options: " + e);
+    }
   }
 
   private void registerRequirements() {
@@ -459,7 +745,6 @@ public class ArkonasRanksPlugin extends JavaPlugin {
         new AdvancementRequirement(this),
         new GroupRequirement(this),
         new PermissionRequirement(this),
-        new PlaceholderRequirement(this),
         new WorldRequirement(this),
         new BlockBreakRequirement(this),
         new PlayerKillsRequirement(this),
@@ -473,6 +758,12 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       requirements.addRequirements(
           new MoneyRequirement(this, "moneyh"),
           new MoneyDeductibleRequirement(this, "money"));
+    }
+    // PlaceholderAPI is only a softdepend, and PlaceholderRequirement touches PAPI classes directly,
+    // so register it only when PAPI is present — otherwise a configured `placeholder` requirement
+    // would throw NoClassDefFoundError on evaluation.
+    if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+      requirements.addRequirements(new PlaceholderRequirement(this));
     }
 
     PluginManager pluginManager = Bukkit.getPluginManager();
@@ -508,6 +799,26 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     }
     if (Bukkit.getPluginManager().isPluginEnabled("SuperbVote")) {
       requirements.addRequirements(new SuperbVoteVotesRequirement(this));
+    }
+    if (Bukkit.getPluginManager().isPluginEnabled("PlayerPoints")) {
+      requirements.addRequirements(
+          new com.arkonas.ranks.requirements.requirement.playerpoints
+              .PlayerPointsDeductibleRequirement(this, "playerpoints"),
+          new com.arkonas.ranks.requirements.requirement.playerpoints
+              .PlayerPointsRequirement(this, "playerpointsh"));
+    }
+    if (Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) {
+      requirements.addRequirements(
+          new com.arkonas.ranks.requirements.requirement.worldguard.WorldGuardRegionRequirement(
+              this));
+    }
+    if (Bukkit.getPluginManager().isPluginEnabled("Quests")) {
+      requirements.addRequirements(
+          new com.arkonas.ranks.requirements.requirement.quests.QuestRequirement(this));
+    }
+    if (Bukkit.getPluginManager().isPluginEnabled("BetonQuest")) {
+      requirements.addRequirements(
+          new com.arkonas.ranks.requirements.requirement.betonquest.BetonQuestTagRequirement(this));
     }
   }
 

@@ -2,9 +2,9 @@
 #
 # These pop-up inventory menus replace the chat output of /rankup, /ranks,
 # /prestige, /prestiges and /rankup top when menus.enabled (config.yml) is true.
-# While the menus are active the parity settings ranks-gui and confirmation-type
-# are ignored (the menu is the confirmation screen). Set menus.enabled: false in
-# config.yml to return to exact Rankup3 parity.
+# While the menus are active the ranks-gui and confirmation-type settings are
+# ignored (the menu is the confirmation screen). Set menus.enabled: false in
+# config.yml to go back to the classic chat output.
 #
 # All item names/lore support legacy & codes, &#RRGGBB hex and MiniMessage tags
 # (the message-format setting in config.yml applies here too). The wording lives

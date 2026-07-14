@@ -1,0 +1,14 @@
+a:
+  rank: 'A'
+  next: 'B'
+  requirements:
+    - 'money 50'
+  # per-rank celebration override: this rank plays a note-block pling instead of the global levelup
+  celebration:
+    sound:
+      name: block.note_block.pling
+b:
+  rank: 'B'
+  next: 'C'
+  requirements:
+    - 'money 50'

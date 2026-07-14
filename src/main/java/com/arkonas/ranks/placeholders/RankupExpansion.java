@@ -21,6 +21,19 @@ public class RankupExpansion implements Expansion {
 
     private final ArkonasRanksPlugin plugin;
     private final Placeholders placeholders;
+    private LeaderboardPlaceholder leaderboard;
+
+    /** Lazily built leaderboard resolver with the configured empty-slot fallbacks. */
+    private LeaderboardPlaceholder leaderboard() {
+        if (leaderboard == null) {
+            org.bukkit.configuration.ConfigurationSection section =
+                plugin.getConfig().getConfigurationSection("placeholders");
+            String emptyName = section == null ? "" : section.getString("leaderboard-empty-name", "");
+            String emptyCount = section == null ? "0" : section.getString("leaderboard-empty-count", "0");
+            leaderboard = new LeaderboardPlaceholder(emptyName, emptyCount);
+        }
+        return leaderboard;
+    }
 
     @Override
     public String placeholder(Player player, String params) {
@@ -46,6 +59,11 @@ public class RankupExpansion implements Expansion {
             return top;
         }
 
+        String rebirthValue = rebirthPlaceholder(player, params);
+        if (rebirthValue != null) {
+            return rebirthValue;
+        }
+
         if (params.startsWith("requirement_")) {
             String[] parts = params.split("_", 3);
             return getPlaceholderRequirement(player, rank,
@@ -58,7 +76,7 @@ public class RankupExpansion implements Expansion {
             String[] parts = params.split("_", 4);
             double amount = Objects.requireNonNull(rankups.getRankByName(parts[2]), "Rankup " + parts[2] + " does not exist").getRequirement(player, "money").getValueDouble();
             if (parts.length > 3 && parts[3].equalsIgnoreCase("left")) {
-                amount = amount - plugin.getEconomy().getBalance(player);
+                amount = amount - balance(player);
             }
             return plugin.getPlaceholders().formatMoney(Math.max(0, amount));
         } else if (params.startsWith("status_")) {
@@ -143,21 +161,21 @@ public class RankupExpansion implements Expansion {
             case "money_formatted":
                 return placeholders.formatMoney(getMoney(player, rank).doubleValue());
             case "money_left":
-                return String.valueOf(Math.max(0, orElse(rank, r -> simplify(r.getRequirement(player, "money").getValueDouble() - plugin.getEconomy().getBalance(player)), 0).doubleValue()));
+                return String.valueOf(Math.max(0, orElse(rank, r -> simplify(r.getRequirement(player, "money").getValueDouble() - balance(player)), 0).doubleValue()));
             case "money_left_formatted":
-                return placeholders.formatMoney(Math.max(0D, orElse(rank, r -> r.getRequirement(player, "money").getValueDouble() - plugin.getEconomy().getBalance(player), 0D)));
+                return placeholders.formatMoney(Math.max(0D, orElse(rank, r -> r.getRequirement(player, "money").getValueDouble() - balance(player), 0D)));
             case "percent_left":
-                return String.valueOf(Math.max(0D, orElse(rank, r -> (1 - (plugin.getEconomy().getBalance(player) / r.getRequirement(player, "money").getValueDouble())) * 100, 0).doubleValue()));
+                return String.valueOf(Math.max(0D, orElse(rank, r -> (1 - (balance(player) / r.getRequirement(player, "money").getValueDouble())) * 100, 0).doubleValue()));
             case "percent_left_formatted":
-                return placeholders.getPercentFormat().format(Math.max(0D, orElse(rank, r -> (1 - (plugin.getEconomy().getBalance(player) / r.getRequirement(player, "money").getValueDouble())) * 100, 0).doubleValue()));
+                return placeholders.getPercentFormat().format(Math.max(0D, orElse(rank, r -> (1 - (balance(player) / r.getRequirement(player, "money").getValueDouble())) * 100, 0).doubleValue()));
             case "percent_done":
-                return String.valueOf(Math.min(100D, orElse(rank, r -> (plugin.getEconomy().getBalance(player) / r.getRequirement(player, "money").getValueDouble()) * 100, 0).doubleValue()));
+                return String.valueOf(Math.min(100D, orElse(rank, r -> (balance(player) / r.getRequirement(player, "money").getValueDouble()) * 100, 0).doubleValue()));
             case "percent_done_formatted":
-                return placeholders.getPercentFormat().format(Math.min(100D, orElse(rank, r -> (plugin.getEconomy().getBalance(player) / r.getRequirement(player, "money").getValueDouble()) * 100, 0).doubleValue()));
+                return placeholders.getPercentFormat().format(Math.min(100D, orElse(rank, r -> (balance(player) / r.getRequirement(player, "money").getValueDouble()) * 100, 0).doubleValue()));
             case "prestige_percent_left_formatted":
-                return placeholders.getPercentFormat().format(Math.max(0D, orElse(prestige, r -> (1 - (plugin.getEconomy().getBalance(player) / r.getRequirement(player, "money").getValueDouble())) * 100, 0).doubleValue()));
+                return placeholders.getPercentFormat().format(Math.max(0D, orElse(prestige, r -> (1 - (balance(player) / r.getRequirement(player, "money").getValueDouble())) * 100, 0).doubleValue()));
             case "prestige_percent_done_formatted":
-                return placeholders.getPercentFormat().format(Math.min(100D, orElse(prestige, r -> (plugin.getEconomy().getBalance(player) / r.getRequirement(player, "money").getValueDouble()) * 100, 0).doubleValue()));
+                return placeholders.getPercentFormat().format(Math.min(100D, orElse(prestige, r -> (balance(player) / r.getRequirement(player, "money").getValueDouble()) * 100, 0).doubleValue()));
             default:
                 return null;
         }
@@ -165,6 +183,12 @@ public class RankupExpansion implements Expansion {
 
     private Number getMoney(Player player, Rank rank) {
         return orElse(rank, r -> simplify(r.getRequirement(player, "money").getValueDouble()), 0);
+    }
+
+    /** The player's balance, or 0 when no economy backend is registered (Vault present but no
+     *  economy service), so the money placeholders degrade instead of throwing a NPE. */
+    private double balance(Player player) {
+        return plugin.getEconomy() == null ? 0 : plugin.getEconomy().getBalance(player);
     }
 
     private void requirePrestiging(Prestiges prestiges, String params) {
@@ -178,31 +202,17 @@ public class RankupExpansion implements Expansion {
      */
     private String topPlaceholder(Player player, String params) {
         com.arkonas.ranks.data.StatsService stats = plugin.getStats();
-        boolean prestigeTop = params.startsWith("prestige_top_");
-        if (params.startsWith("top_") || prestigeTop) {
+        // keep the original family-first ordering: a top_/prestige_top_ param with the stats
+        // subsystem disabled resolves to "" (not a fall-through), even when it is malformed
+        if (params.startsWith("top_") || params.startsWith("prestige_top_")) {
             if (stats == null) {
                 return "";
             }
-            String[] parts = params.split("_");
-            // top_<n>_<field> or prestige_top_<n>_<field>
-            int indexOffset = prestigeTop ? 2 : 1;
-            if (parts.length < indexOffset + 2) {
-                return null;
+            LeaderboardPlaceholder.Request request = LeaderboardPlaceholder.parse(params);
+            if (request == null) {
+                return null; // malformed with stats present: fall through, as the old code did
             }
-            int position;
-            try {
-                position = Integer.parseInt(parts[indexOffset]);
-            } catch (NumberFormatException e) {
-                return null;
-            }
-            java.util.List<com.arkonas.ranks.data.LeaderboardEntry> entries =
-                stats.cachedTop(prestigeTop);
-            if (position < 1 || position > entries.size()) {
-                return "";
-            }
-            com.arkonas.ranks.data.LeaderboardEntry entry = entries.get(position - 1);
-            return parts[indexOffset + 1].equals("count")
-                ? String.valueOf(entry.count()) : entry.name();
+            return leaderboard().render(request, stats.cachedTop(request.prestige()));
         }
         if (params.equals("player_rankups") || params.equals("player_prestiges")) {
             if (stats == null) {
@@ -212,6 +222,34 @@ public class RankupExpansion implements Expansion {
             return String.valueOf(params.equals("player_rankups") ? counts[0] : counts[1]);
         }
         return null;
+    }
+
+    /**
+     * Rebirth stat placeholders: current_rebirth, next_rebirth, rebirth_count (alias rebirths).
+     * Returns null when params is not one of them.
+     */
+    private String rebirthPlaceholder(Player player, String params) {
+        boolean current = params.equals("current_rebirth");
+        boolean next = params.equals("next_rebirth");
+        boolean count = params.equals("rebirth_count") || params.equals("rebirths");
+        if (!current && !next && !count) {
+            return null;
+        }
+        com.arkonas.ranks.rebirth.RebirthManager rebirth = plugin.getRebirth();
+        String none = plugin.getConfig().getString("placeholders.not-in-ladder", "None");
+        if (rebirth == null || !rebirth.isEnabled()) {
+            return count ? "0" : none;
+        }
+        if (count) {
+            return String.valueOf(rebirth.currentIndex(player) + 1);
+        }
+        if (current) {
+            String group = rebirth.currentGroup(player);
+            return group == null ? none : group;
+        }
+        String group = rebirth.nextGroup(player);
+        return group == null
+            ? plugin.getConfig().getString("placeholders.highest-rank", "None") : group;
     }
 
     private String getPlaceholderRequirement(Player player, Rank rank, String requirementName, String params) {

@@ -143,11 +143,16 @@ public class RankupHelper {
   }
 
   public void rankup(Player player) {
-    if (!checkRankup(player)) {
+    rankup(player, plugin.getRankups());
+  }
+
+  /** Ranks a player up one step on a specific ladder, honouring the manual cooldown. */
+  public void rankup(Player player, Rankups rankups) {
+    if (!checkRankup(player, rankups, true)) {
       return;
     }
 
-    RankElement<Rank> rankElement = plugin.getRankups().getByPlayer(player);
+    RankElement<Rank> rankElement = rankups.getByPlayer(player);
     Rank rank = rankElement.getRank();
     rank.applyRequirements(player);
     applyCooldown(player);
@@ -156,18 +161,54 @@ public class RankupHelper {
     sendRankupMessages(player, rankElement);
   }
 
+  /**
+   * Ranks a player up a single step without applying or enforcing the manual rankup cooldown, and
+   * reports whether they advanced. Used by auto-max so a pass can chain multiple rankups without
+   * each step's cooldown blocking the next (the manual {@code cooldown} setting is a spam guard for
+   * the {@code /rankup} command, not for automatic progression).
+   *
+   * @param player the player to advance
+   * @return true if the player ranked up, false if they could not (not in a ladder, at the top, or
+   *         requirements unmet)
+   */
+  public boolean rankupOnce(Player player) {
+    return rankupOnce(player, plugin.getRankups());
+  }
+
+  /** Cooldown-free single-step rankup on a specific ladder; returns true if the player advanced. */
+  public boolean rankupOnce(Player player, Rankups rankups) {
+    if (!checkRankup(player, rankups, false)) {
+      return false;
+    }
+
+    RankElement<Rank> rankElement = rankups.getByPlayer(player);
+    Rank rank = rankElement.getRank();
+    rank.applyRequirements(player);
+
+    doRankup(player, rankElement);
+    sendRankupMessages(player, rankElement);
+    return true;
+  }
+
   public boolean checkRankup(Player player) {
-    return checkRankup(player, true);
+    return checkRankup(player, plugin.getRankups(), true);
+  }
+
+  public boolean checkRankup(Player player, boolean message) {
+    return checkRankup(player, plugin.getRankups(), message);
   }
 
   /**
-   * Checks if a player can rankup, and if they can't, sends the player a message and returns false
+   * Checks if a player can rankup on a specific ladder, and if they can't, sends the player a
+   * message and returns false. The prestige-hint branch (MUST_PRESTIGE) only applies to the default
+   * ladder, since prestige is a single global track.
    *
-   * @param player the player to check if they can rankup
+   * @param player the player to check
+   * @param rankups the ladder to check against
+   * @param message whether to send feedback messages (and enforce the cooldown)
    * @return true if the player can rankup, false otherwise
    */
-  public boolean checkRankup(Player player, boolean message) {
-    Rankups rankups = plugin.getRankups();
+  public boolean checkRankup(Player player, Rankups rankups, boolean message) {
     RankElement<Rank> rankElement = rankups.getByPlayer(player);
     if (rankElement == null) { // check if in ladder
       plugin.getMessage(Message.NOT_IN_LADDER)
@@ -178,12 +219,15 @@ public class RankupHelper {
     }
     Rank rank = rankElement.getRank();
     if (!rankElement.hasNext()) {
-      Prestiges prestiges = plugin.getPrestiges();
       Message pMessage = Message.NO_RANKUP;
-      if (prestiges != null) {
-        RankElement<Prestige> byPlayer = prestiges.getByPlayer(player);
-        if (byPlayer != null && byPlayer.hasNext()) {
-          pMessage = Message.MUST_PRESTIGE;
+      // prestige is a single global track, only hinted at from the default ladder
+      if (rankups == plugin.getRankups()) {
+        Prestiges prestiges = plugin.getPrestiges();
+        if (prestiges != null) {
+          RankElement<Prestige> byPlayer = prestiges.getByPlayer(player);
+          if (byPlayer != null && byPlayer.hasNext()) {
+            pMessage = Message.MUST_PRESTIGE;
+          }
         }
       }
       plugin.getMessage(pMessage)

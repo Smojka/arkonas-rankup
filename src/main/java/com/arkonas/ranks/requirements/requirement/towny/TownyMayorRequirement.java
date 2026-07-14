@@ -15,7 +15,12 @@ public class TownyMayorRequirement extends Requirement {
 
   @Override
   public boolean check(Player player) {
-    return TownyUtils.getInstance().isMayor(player) == getValueBoolean();
+    try {
+      return TownyUtils.getInstance().isMayor(player) == getValueBoolean();
+    } catch (Throwable t) {
+      logHookFailureOnce(t);
+      return false;
+    }
   }
 
   @Override

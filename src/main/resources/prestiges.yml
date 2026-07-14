@@ -7,6 +7,13 @@ first:
   # see rankups.yml for more information on requirements, commands, and messages
   requirements:
     - 'money 10000'
+  # OPTIONAL per-prestige reward commands. The console runs these when a player
+  # completes THIS prestige. Groups are changed automatically; use commands for
+  # extra rewards (money, items, crates, broadcasts). Pebble/PlaceholderAPI
+  # placeholders work: {{player}}, {{rank.rank}} (old), {{next.rank}} (new).
+  #commands:
+  #- 'eco give {{player}} 5000'
+  #- 'broadcast &d{{player}} reached their first prestige!'
 P1example:
   from: 'D'
   to: 'A'
@@ -16,3 +23,6 @@ P1example:
   requirements:
     - 'money 20000'
     - 'xp-level 5'
+  #commands:
+  #- 'give {{player}} diamond 5'
+  #- 'broadcast &d{{player}} prestiged to {{next.rank}}!'

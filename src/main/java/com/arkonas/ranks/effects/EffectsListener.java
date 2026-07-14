@@ -57,6 +57,18 @@ public class EffectsListener implements Listener {
     return config.getConfigurationSection(globalKey);
   }
 
+  /**
+   * Plays the {@code rebirth} celebration section for a rebirth. Rebirth fires no rankup/prestige
+   * event, so {@link com.arkonas.ranks.rebirth.RebirthManager} calls this directly. A distinct
+   * section lets servers give rebirths their own stinger.
+   */
+  public void celebrateRebirth(org.bukkit.entity.Player player, String from, String to) {
+    if (!enabled()) {
+      return;
+    }
+    effects.play(player, config.getConfigurationSection("rebirth"), from, to);
+  }
+
   @EventHandler(priority = EventPriority.MONITOR)
   public void onRankup(PlayerRankupEvent event) {
     if (!enabled()) {

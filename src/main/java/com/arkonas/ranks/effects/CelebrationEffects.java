@@ -40,6 +40,7 @@ public class CelebrationEffects {
       return;
     }
     playSound(player, section.getConfigurationSection("sound"));
+    playJingle(player, section.getConfigurationSection("jingle"));
     playParticle(player, section.getConfigurationSection("particle"));
     playFirework(player, section.getConfigurationSection("firework"));
 
@@ -80,6 +81,41 @@ public class CelebrationEffects {
     }
     player.playSound(player.getLocation(), parsed,
         (float) sound.getDouble("volume", 1.0), (float) sound.getDouble("pitch", 1.0));
+  }
+
+  /**
+   * Plays a short ascending "jingle" — the same note-block sound repeated with a rising pitch on a
+   * fixed tick interval. Scheduled on the main thread (one task per note); pitch is clamped to the
+   * musical note-block range [0.5, 2.0]. Opt-in via {@code jingle.enabled}.
+   */
+  private void playJingle(Player player, ConfigurationSection jingle) {
+    if (jingle == null || !jingle.getBoolean("enabled", false)) {
+      return;
+    }
+    String name = jingle.getString("sound", "block.note_block.pling");
+    Sound parsed;
+    try {
+      parsed = Registry.SOUNDS.get(NamespacedKey.minecraft(name.toLowerCase().replace(' ', '_')));
+    } catch (Exception e) {
+      parsed = null;
+    }
+    if (parsed == null) {
+      plugin.getLogger().warning("Unknown jingle sound: " + name);
+      return;
+    }
+    final Sound sound = parsed;
+    int notes = Math.max(1, jingle.getInt("notes", 5));
+    double startPitch = jingle.getDouble("start-pitch", 0.8);
+    double pitchStep = jingle.getDouble("pitch-step", 0.15);
+    float volume = (float) jingle.getDouble("volume", 1.0);
+    long interval = Math.max(1, jingle.getLong("interval-ticks", 3));
+
+    for (int i = 0; i < notes; i++) {
+      float pitch = (float) Math.max(0.5, Math.min(2.0, startPitch + i * pitchStep));
+      long delay = (long) i * interval;
+      plugin.getServer().getScheduler().runTaskLater(plugin,
+          () -> player.playSound(player.getLocation(), sound, volume, pitch), delay);
+    }
   }
 
   private void playParticle(Player player, ConfigurationSection particle) {

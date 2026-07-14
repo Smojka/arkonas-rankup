@@ -19,6 +19,12 @@ public class XpLevelRequirement extends ProgressiveRequirement {
     return player.getLevel();
   }
 
+  /** Effective XP-level cost after any active cost multiplier, so a sale discounts XP too. */
+  @Override
+  public double getTotal(Player player) {
+    return getValueDouble() * costFactor(player);
+  }
+
   @Override
   public Requirement clone() {
     return new XpLevelRequirement(this);

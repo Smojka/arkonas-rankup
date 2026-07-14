@@ -23,7 +23,8 @@ public class Rankup extends Rank {
         serialized.getNext(),
         serialized.getRank(),
         serialized.getDisplayName(),
-        RankRequirementsFactory.getRequirements(plugin, serialized.getRequirements(), serialized.getPrestigeRequirements()),
+        RankRequirementsFactory.getRequirements(plugin, serialized.getRequirements(),
+            serialized.getPrestigeRequirements(), serialized.getCostMultiplier()),
         Objects.requireNonNull(serialized.getCommands(), "rank commands are null"));
   }
 

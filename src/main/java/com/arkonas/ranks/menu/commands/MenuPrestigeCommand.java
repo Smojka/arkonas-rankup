@@ -10,19 +10,19 @@ import com.arkonas.ranks.menu.MenuModule;
 
 /**
  * Menu wrapper for {@code /prestige}. Players get the prestige confirmation
- * menu; the console falls through to the wrapped parity executor.
+ * menu; the console falls through to the wrapped chat executor.
  */
 @RequiredArgsConstructor
 public class MenuPrestigeCommand implements CommandExecutor {
 
   private final ArkonasRanksPlugin plugin;
   private final MenuModule menu;
-  private final CommandExecutor parity;
+  private final CommandExecutor chat;
 
   @Override
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
     if (!(sender instanceof Player)) {
-      return parity.onCommand(sender, command, label, args);
+      return chat.onCommand(sender, command, label, args);
     }
     Player player = (Player) sender;
     if (plugin.error(player)) {

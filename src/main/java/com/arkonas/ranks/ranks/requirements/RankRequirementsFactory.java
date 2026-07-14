@@ -14,27 +14,46 @@ public class RankRequirementsFactory {
   private static final String REQUIREMENTS = "requirements";
 
   public static RankRequirements getRequirements(ArkonasRanksPlugin plugin, ConfigurationSection section) {
+    double perRankFactor = section.getDouble("cost-multiplier", 1.0);
     if (section.isConfigurationSection(REQUIREMENTS)) {
-      return getPrestigeListRequirements(plugin, section.getConfigurationSection(REQUIREMENTS));
+      return applyFactor(
+          getPrestigeListRequirements(plugin, section.getConfigurationSection(REQUIREMENTS)),
+          perRankFactor);
     } else {
-      return getListRequirements(plugin, getRequirementStrings(section, REQUIREMENTS));
+      return applyFactor(
+          getListRequirements(plugin, getRequirementStrings(section, REQUIREMENTS)), perRankFactor);
     }
+  }
+
+  /** Stamps a per-rank cost multiplier onto every requirement built for the rank. */
+  private static RankRequirements applyFactor(RankRequirements requirements, double perRankFactor) {
+    if (requirements != null && perRankFactor != 1.0) {
+      requirements.setPerRankFactor(perRankFactor);
+    }
+    return requirements;
   }
 
   public static RankRequirements getRequirements(ArkonasRanksPlugin plugin, List<String> requirements,
       Map<String, List<String>> prestigeRequirements) {
+    return getRequirements(plugin, requirements, prestigeRequirements, 1.0);
+  }
+
+  public static RankRequirements getRequirements(ArkonasRanksPlugin plugin, List<String> requirements,
+      Map<String, List<String>> prestigeRequirements, double perRankFactor) {
+    RankRequirements built;
     if (prestigeRequirements != null) {
       ConfigurationSection section = new MemoryConfiguration();
       for (Map.Entry<String, List<String>> entry : prestigeRequirements.entrySet()) {
         section.set(entry.getKey(), entry.getValue());
       }
-      return getPrestigeListRequirements(plugin, section);
+      built = getPrestigeListRequirements(plugin, section);
     } else if (requirements != null) {
-      return getListRequirements(plugin, requirements);
+      built = getListRequirements(plugin, requirements);
     } else {
 //      throw new IllegalArgumentException("No requirements set.");
       return null;
     }
+    return applyFactor(built, perRankFactor);
   }
 
   private static Collection<String> getRequirementStrings(ConfigurationSection section, String key) {

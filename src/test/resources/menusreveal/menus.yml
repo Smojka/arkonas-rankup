@@ -1,0 +1,114 @@
+# ArkonasRanks - Advanced menu module (GUI overhaul).
+#
+# These pop-up inventory menus replace the chat output of /rankup, /ranks,
+# /prestige, /prestiges and /rankup top when menus.enabled (config.yml) is true.
+# While the menus are active the ranks-gui and confirmation-type settings are
+# ignored (the menu is the confirmation screen). Set menus.enabled: false in
+# config.yml to go back to the classic chat output.
+#
+# All item names/lore support legacy & codes, &#RRGGBB hex and MiniMessage tags
+# (the message-format setting in config.yml applies here too). The wording lives
+# in the locale files under the "menu:" section.
+
+# Frame-clock animations. period is in ticks (2 = ~10 fps). The single ticker is
+# started lazily when the first menu opens and cancelled when the last closes.
+animation:
+  enabled: true
+  period: 2
+  border-chase: false
+  progress-fill: true
+  confirm-pulse: true
+  cooldown-countdown: true
+  open-reveal: true
+  open-reveal-speed: 1
+
+theme:
+  # gradient endpoints used for menu titles and accents
+  primary: '#00E5FF'
+  secondary: '#7C4DFF'
+  # state colours
+  success: '#3DDC84'
+  danger: '#FF5370'
+  muted: '#8A8F98'
+  border:
+    # opaque pane on every empty slot
+    base: BLACK_STAINED_GLASS_PANE
+    # the chasing light cycles through these panes
+    light:
+      - CYAN_STAINED_GLASS_PANE
+      - LIGHT_BLUE_STAINED_GLASS_PANE
+      - PURPLE_STAINED_GLASS_PANE
+    lights: 3
+  progress:
+    filled-char: '▰'
+    empty-char: '▱'
+    length: 10
+    # bar style: classic (filled/empty chars), smooth (eighth-block sub-cells),
+    # or gradient (hex gradient over the filled cells).
+    # smooth/gradient need message-format auto or minimessage (config.yml).
+    style: classic
+    gradient:
+      from: '#3DDC84'
+      to: '#00E5FF'
+      empty: '#8A8F98'
+  # UI sounds (the rankup/prestige success sound lives in effects.yml, not here)
+  sounds:
+    open: block.note_block.pling
+    click: ui.button.click
+    page: item.book.page_turn
+    deny: block.note_block.bass
+
+# requirement name -> icon. Resolution: exact match, then the name with a trailing
+# 'h' stripped (the hold variants share their icon), then default.
+# Each entry is either a material name, or a section for modern resource-pack icons:
+#   money:
+#     material: PLAYER_HEAD          # base item
+#     custom-model-data: 1001        # resource-pack model (Oraxen/ItemsAdder/Nexo pack)
+#     head-texture: <player-or-base64>  # for PLAYER_HEAD icons
+#     glow: false
+requirement-icons:
+  default: PAPER
+  money: GOLD_INGOT
+  xp-level: EXPERIENCE_BOTTLE
+  playtime-minutes: CLOCK
+  block-break: DIAMOND_PICKAXE
+  mob-kills: DIAMOND_SWORD
+  total-mob-kills: DIAMOND_SWORD
+  player-kills: IRON_SWORD
+  item: CHEST
+  use-item: CHEST
+  craft-item: CRAFTING_TABLE
+  advancement: KNOWLEDGE_BOOK
+  group: NAME_TAG
+  permission: TRIPWIRE_HOOK
+  placeholder: COMMAND_BLOCK
+  world: GRASS_BLOCK
+  mcmmo: IRON_AXE
+  mcmmo-power-level: IRON_AXE
+  tokenmanager-tokens: SUNFLOWER
+  votingplugin-votes: WRITABLE_BOOK
+  superbvote-votes: WRITABLE_BOOK
+  advancedachievements-total: KNOWLEDGE_BOOK
+
+menus:
+  hub:
+    rows: 5
+    head-slot: 13
+    path-slot: 20
+    rankup-slot: 22
+    prestige-slot: 24
+    leaderboard-slot: 40
+  path:
+    rows: 6
+  rankup:
+    rows: 5
+    # material of the rank-info panel shown at slot 13 (name + rewards)
+    info-material: WRITABLE_BOOK
+  prestige:
+    rows: 5
+    # material of the rank-info panel shown at slot 13 (name + rewards)
+    info-material: WRITABLE_BOOK
+  prestige-list:
+    rows: 6
+  leaderboard:
+    rows: 6

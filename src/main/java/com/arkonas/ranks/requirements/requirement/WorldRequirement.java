@@ -17,7 +17,11 @@ public class WorldRequirement extends Requirement {
   public boolean check(Player player) {
     String[] worlds = getValuesString();
     for (String world : worlds) {
-      return player.getWorld().getName().equalsIgnoreCase(world);
+      // a space-separated `world a b c` matches if the player is in ANY listed world; the previous
+      // unconditional return only ever checked the first (mirrors Permission/Group semantics)
+      if (player.getWorld().getName().equalsIgnoreCase(world)) {
+        return true;
+      }
     }
     return false;
   }

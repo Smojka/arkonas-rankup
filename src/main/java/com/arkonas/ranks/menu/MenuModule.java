@@ -6,6 +6,7 @@ import lombok.Getter;
 import org.bukkit.entity.Player;
 import com.arkonas.ranks.ArkonasRanksPlugin;
 import com.arkonas.ranks.menu.screens.HubMenu;
+import com.arkonas.ranks.menu.screens.LadderPickerMenu;
 import com.arkonas.ranks.menu.screens.LeaderboardMenu;
 import com.arkonas.ranks.menu.screens.PrestigeListMenu;
 import com.arkonas.ranks.menu.screens.PrestigeMenu;
@@ -17,7 +18,7 @@ import com.arkonas.ranks.menu.screens.RankupMenu;
  * {@link MenuTicker} and {@link MenuListener}, exposes the {@code open*}
  * factories used by the command wrappers, and tracks which menus are open.
  *
- * <p>Everything here is additive to the Rankup3-parity core. When
+ * <p>Everything here is additive to the classic chat-based core. When
  * {@code menus.enabled} is false this module is never constructed and the plugin
  * behaves exactly as before.
  */
@@ -102,6 +103,15 @@ public class MenuModule {
     return config.animationEnabled() && config.animationFlag("cooldown-countdown");
   }
 
+  /** Open-reveal transition, opt-in (default off), so existing menus are unchanged. */
+  public boolean openReveal() {
+    return config.animationEnabled() && config.animationFlag("open-reveal", false);
+  }
+
+  public int openRevealSpeed() {
+    return config.openRevealSpeed();
+  }
+
   // --- factories ------------------------------------------------------------
 
   public void openHub(Player player) {
@@ -113,7 +123,16 @@ public class MenuModule {
   }
 
   public void openRankPath(Player player) {
-    new RankPathMenu(this, player, null).open();
+    // multi-ladder servers get a ladder picker; single-ladder servers go straight to the path
+    if (plugin.getLadders() != null && plugin.getLadders().hasMultiple()) {
+      new LadderPickerMenu(this, player, null).open();
+    } else {
+      new RankPathMenu(this, player, null).open();
+    }
+  }
+
+  public void openLadderPicker(Player player) {
+    new LadderPickerMenu(this, player, null).open();
   }
 
   public void openPrestige(Player player) {

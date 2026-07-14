@@ -39,6 +39,10 @@ public class MenuTheme {
   private final int lights;
 
   private final ProgressBar progressBar;
+  private final String progressStyle;
+  private final String progressFrom;
+  private final String progressTo;
+  private final String progressEmpty;
   private final ConfigurationSection sounds;
 
   public MenuTheme(ArkonasRanksPlugin plugin, MenuConfig config) {
@@ -76,11 +80,38 @@ public class MenuTheme {
     int barLength = progress == null ? 10 : progress.getInt("length", 10);
     this.progressBar = new ProgressBar(filled, empty, barLength);
 
+    this.progressStyle = progress == null ? "classic" : progress.getString("style", "classic");
+    ConfigurationSection gradient =
+        progress == null ? null : progress.getConfigurationSection("gradient");
+    this.progressFrom = hex(gradient, "from", success);
+    this.progressTo = hex(gradient, "to", primary);
+    this.progressEmpty = hex(gradient, "empty", muted);
+
     this.sounds = theme == null ? null : theme.getConfigurationSection("sounds");
   }
 
   public ProgressBar progressBar() {
     return progressBar;
+  }
+
+  public String progressStyle() {
+    return progressStyle;
+  }
+
+  /**
+   * Renders the progress bar in the configured style. {@code filledSegments} keeps the animated
+   * fill lined up with its per-step precompute; {@code fraction} drives the smooth sub-cell style.
+   */
+  public String renderBar(int filledSegments, double fraction) {
+    // the gradient style emits MiniMessage tags, which render literally under message-format:
+    // legacy; degrade to the classic bar there so it never shows raw <gradient> text
+    if ("gradient".equalsIgnoreCase(progressStyle)
+        && plugin.getComponentRenderer()
+            instanceof com.arkonas.ranks.text.LegacyComponentRenderer) {
+      return progressBar.partialBar(filledSegments);
+    }
+    return progressBar.styled(progressStyle, filledSegments, fraction,
+        progressFrom, progressTo, progressEmpty);
   }
 
   public String primary() {
@@ -130,7 +161,17 @@ public class MenuTheme {
     if (sounds == null || player == null) {
       return;
     }
-    String name = sounds.getString(key, "");
+    String name;
+    float volume = 0.6f;
+    float pitch = 1.2f;
+    if (sounds.isConfigurationSection(key)) {
+      ConfigurationSection sound = sounds.getConfigurationSection(key);
+      name = sound.getString("name", "");
+      volume = (float) sound.getDouble("volume", 0.6);
+      pitch = (float) sound.getDouble("pitch", 1.2);
+    } else {
+      name = sounds.getString(key, "");
+    }
     if (name.isEmpty()) {
       return;
     }
@@ -138,7 +179,7 @@ public class MenuTheme {
       Sound parsed = Registry.SOUNDS.get(
           NamespacedKey.minecraft(name.toLowerCase().replace(' ', '_')));
       if (parsed != null) {
-        player.playSound(player.getLocation(), parsed, 0.6f, 1.2f);
+        player.playSound(player.getLocation(), parsed, volume, pitch);
       }
     } catch (Exception ignored) {
       // MockBukkit / unusual servers may not expose the sound registry

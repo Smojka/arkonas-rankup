@@ -1,0 +1,51 @@
+version: 10
+locale: en
+autorankup-interval: 0
+ranks: true
+prestiges: true
+ranks-gui: false
+prestige: false
+notify-update: true
+permission-rankup: false
+luckperms-context: ''
+use-luckperms-group-names: false
+enable-noconfirm: true
+confirmation-type: 'none'
+cooldown: 0
+max-rankup:
+  enabled: false
+  individual-messages: true
+text:
+  timeout: 10
+placeholders:
+  money-format: "#,##0.##"
+  percent-format: "0.##"
+  simple-format: "#.##"
+  not-in-ladder: "None"
+  no-prestige: "None"
+  highest-rank: "None"
+  status:
+    complete: "Complete"
+    current: "Current"
+    incomplete: "Incomplete"
+  last-rank-display-name: "last rank"
+shorten:
+- 'K'
+- 'M'
+message-format: auto
+database:
+  enabled: false
+menus:
+  enabled: false
+rebirth:
+  enabled: true
+  requires: top-rank
+  groups:
+    - reborn1
+    - reborn2
+  reset-ranks: true
+  requirements:
+    - 'money 100'
+  commands: []
+  messages:
+    success: '&aReborn as {rebirth}'

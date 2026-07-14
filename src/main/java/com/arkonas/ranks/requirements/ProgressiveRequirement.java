@@ -23,7 +23,16 @@ public abstract class ProgressiveRequirement extends Requirement {
 
   @Override
   public double getRemaining(Player player) {
-    return Math.max(0, getTotal(player) - getProgress(player));
+    try {
+      // both getTotal and getProgress can touch a plugin/PlaceholderAPI hook (e.g.
+      // PlaceholderRequirement.getTotal resolves a placeholder that may not be loaded yet), so both
+      // are guarded. Fail closed: any throw reads as "requirement unmet" instead of erroring out of
+      // /rankup, the menus or a placeholder render.
+      return Math.max(0, getTotal(player) - getProgress(player));
+    } catch (Throwable t) {
+      logHookFailureOnce(t);
+      return 1; // positive => still remaining => unmet
+    }
   }
 
   @Override

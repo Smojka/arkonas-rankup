@@ -19,6 +19,15 @@ public class MoneyRequirement extends ProgressiveRequirement {
     return plugin.getEconomy().getBalance(player);
   }
 
+  /**
+   * The effective cost after any active cost multiplier (VIP discount, event booster, ...). Falls
+   * back to the raw configured value when no multiplier service is available.
+   */
+  @Override
+  public double getTotal(Player player) {
+    return getValueDouble() * costFactor(player);
+  }
+
   @Override
   public Requirement clone() {
     return new MoneyRequirement(this);

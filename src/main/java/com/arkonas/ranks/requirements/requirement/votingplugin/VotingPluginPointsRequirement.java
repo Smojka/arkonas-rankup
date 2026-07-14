@@ -21,6 +21,12 @@ public class VotingPluginPointsRequirement extends ProgressiveRequirement {
     return VotingPluginMain.getPlugin().getVotingPluginUserManager().getVotingPluginUser(player).getPoints();
   }
 
+  /** Effective points cost after any active cost multiplier, so a sale discounts vote points too. */
+  @Override
+  public double getTotal(Player player) {
+    return getValueDouble() * costFactor(player);
+  }
+
   @Override
   public Requirement clone() {
     return new VotingPluginPointsRequirement(this);

@@ -243,7 +243,8 @@ public abstract class ConfirmScreen extends AbstractMenu {
   @Override
   protected void onTick(long frame) {
     if (state == State.UNMET && module.progressFill() && !fillEntries.isEmpty()) {
-      long step = frame - getOpenedFrame();
+      // key off reveal completion so the fill animates from 0 after any open-reveal wipe
+      long step = frame - getRevealDoneFrame();
       for (FillEntry entry : fillEntries) {
         int k = (int) Math.max(0, Math.min(step, entry.target));
         if (k != entry.shown) {
