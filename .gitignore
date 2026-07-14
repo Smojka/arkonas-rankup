@@ -5,3 +5,4 @@ build/
 spigot/
 .DS_Store
 testserver/
+local-server/
