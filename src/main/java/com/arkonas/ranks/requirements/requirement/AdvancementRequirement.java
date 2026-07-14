@@ -12,7 +12,6 @@ import java.util.regex.Pattern;
 
 /**
  * Advancement requirement
- * @author Link, with modifications from Okx
  */
 public class AdvancementRequirement extends Requirement {
   public AdvancementRequirement(ArkonasRanksPlugin plugin) {
