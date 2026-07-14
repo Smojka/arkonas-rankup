@@ -16,6 +16,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.java.JavaPluginLoader;
 import com.arkonas.ranks.commands.InfoCommand;
+import com.arkonas.ranks.config.ConfigMigrator;
 import com.arkonas.ranks.commands.MaxRankupCommand;
 import com.arkonas.ranks.commands.PrestigeCommand;
 import com.arkonas.ranks.commands.PrestigesCommand;
@@ -88,13 +89,21 @@ import com.arkonas.ranks.util.VersionChecker;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ArkonasRanksPlugin extends JavaPlugin {
 
-  public static final int CONFIG_VERSION = 10;
+  // 11: the next-gen sections (auto, cost-formula, rebirth, multipliers, boosters, progress-display,
+  // milestones, economy, discord, citizens). migrateConfig() adds them to an older file in place.
+  public static final int CONFIG_VERSION = 11;
 
   @Getter
   private GroupProvider permissions;
@@ -341,6 +350,12 @@ public class ArkonasRanksPlugin extends JavaPlugin {
   public void reload(boolean init) {
     errorMessage = null;
 
+    // bring pre-existing configs up to date with the shipped defaults before anything reads them,
+    // so options added by a plugin update actually appear instead of the feature staying silently off
+    migrateConfig("config.yml");
+    migrateConfig("effects.yml");
+    migrateConfig("menus.yml");
+
     config = loadConfig("config.yml");
 
     if (config.getBoolean("permission-rankup")) {
@@ -370,12 +385,13 @@ public class ArkonasRanksPlugin extends JavaPlugin {
     }
 
     if (config.getInt("version") < CONFIG_VERSION) {
-      getLogger().severe("You are using an outdated config!");
+      // migrateConfig() normally adds the missing options and stamps the version on load, so this
+      // only fires if that could not write the file (permissions, disk) — hence the manual fallback
+      getLogger().severe("Your config is outdated and could not be updated automatically!");
       getLogger().severe("This means that some things might not work!");
-      getLogger().severe("To update, please rename ALL your config files (or the folder they are in),");
-      getLogger().severe("and run /aru reload to generate a new config file.");
-      getLogger().severe("If that does not work, restart your server.");
-      getLogger().severe("You may then copy in your config values manually from the old config.");
+      getLogger().severe("Check that the plugin can write to its folder, then run /aru reload.");
+      getLogger().severe("Failing that, rename ALL your config files (or the folder they are in) and");
+      getLogger().severe("restart to generate fresh ones, then copy your values back in.");
     }
 
     componentRenderer = com.arkonas.ranks.text.ComponentRenderer.of(config.getString("message-format", "auto"));
@@ -656,6 +672,68 @@ public class ArkonasRanksPlugin extends JavaPlugin {
       saveResource(name, false);
     }
     return YamlConfiguration.loadConfiguration(file);
+  }
+
+  /**
+   * Adds any option the shipped default has and the user's file lacks. saveResource only writes a
+   * file when it is absent, so without this a server that predates a feature never gets its keys and
+   * the feature stays silently off (this is how progress-display, boosters, discord, citizens,
+   * economy, milestones, multipliers, rebirth, cost-formula and auto were all missing in the wild).
+   * Existing values are never touched; a one-off backup is written before the first rewrite.
+   */
+  private void migrateConfig(String name) {
+    File file = new File(getDataFolder(), name);
+    if (!file.exists()) {
+      saveResource(name, false);
+      return; // freshly written from the jar: already complete
+    }
+
+    InputStream resource = getResource(name);
+    if (resource == null) {
+      return;
+    }
+
+    try {
+      FileConfiguration user = YamlConfiguration.loadConfiguration(file);
+      FileConfiguration defaults;
+      try (Reader reader = new InputStreamReader(resource, StandardCharsets.UTF_8)) {
+        defaults = YamlConfiguration.loadConfiguration(reader);
+      }
+
+      // menus.enabled ships as true but an absent key reads as false, so adopting the shipped
+      // default would silently move an existing server onto the menu UI on a jar update. Add it
+      // switched off; the admin turns it on when they choose to.
+      Map<String, Object> onUpgrade = name.equals("config.yml")
+          ? Map.of("menus.enabled", false)
+          : Map.of();
+
+      List<String> added = ConfigMigrator.merge(user, defaults, onUpgrade);
+      boolean stale = name.equals("config.yml") && user.getInt("version") < CONFIG_VERSION;
+      if (added.isEmpty() && !stale) {
+        return;
+      }
+      if (stale) {
+        user.set("version", CONFIG_VERSION);
+      }
+      if (added.contains("menus.enabled")) {
+        getLogger().info("The animated menus are available but left disabled so your current"
+            + " /rankup and /ranks behaviour is unchanged — set menus.enabled: true to use them.");
+      }
+
+      File backup = new File(getDataFolder(), name + ".backup");
+      if (!backup.exists()) {
+        Files.copy(file.toPath(), backup.toPath());
+      }
+      user.save(file);
+
+      if (!added.isEmpty()) {
+        getLogger().info("Updated " + name + ": added " + added.size() + " missing option(s) across "
+            + ConfigMigrator.roots(added) + ". Your existing values were kept; the previous file is"
+            + " saved as " + name + ".backup");
+      }
+    } catch (IOException e) {
+      getLogger().warning("Could not update " + name + " with the newest options: " + e);
+    }
   }
 
   private void registerRequirements() {
