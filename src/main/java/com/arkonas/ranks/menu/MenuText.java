@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import com.arkonas.ranks.ArkonasRanksPlugin;
 import com.arkonas.ranks.messages.MessageBuilder;
@@ -41,6 +42,33 @@ public class MenuText {
     return value == null ? def : value;
   }
 
+  /**
+   * Raw locale lines for {@code menu.<path>}: a YAML list as-is, a single string split on
+   * {@code \n}, or {@code def} when the key is absent or empty.
+   */
+  public List<String> rawLines(String path, List<String> def) {
+    return lines(plugin.getMessages(), "menu." + path, def);
+  }
+
+  /**
+   * One lore key off a config section, in either shape: a list of lines, or a single string
+   * split on {@code \n}. Returns {@code def} when the key is unset or resolves to nothing.
+   */
+  public static List<String> lines(ConfigurationSection section, String path, List<String> def) {
+    if (section == null || !section.isSet(path)) {
+      return def;
+    }
+    if (section.isList(path)) {
+      List<String> list = section.getStringList(path);
+      return list.isEmpty() ? def : list;
+    }
+    String single = section.getString(path);
+    if (single == null || single.isEmpty()) {
+      return def;
+    }
+    return List.of(single.split("\n", -1));
+  }
+
   /** Substitutes {@code {key}} tokens literally, before Pebble runs. */
   public static String sub(String message, Map<String, String> tokens) {
     String result = message;
@@ -63,6 +91,19 @@ public class MenuText {
   public Component component(Player player, String message, Consumer<MessageBuilder> setup) {
     MessageBuilder mb = plugin.newMessageBuilder(message).replacePlayer(player);
     setup.accept(mb);
+    return mb.toComponent(player).decoration(TextDecoration.ITALIC, false);
+  }
+
+  /**
+   * Renders a component with both rank context ({@code {{rank.rank}}}, {@code {{next.rank}}})
+   * and arbitrary extra keys; {@code setup} may be null.
+   */
+  public Component component(Player player, String message, Rank oldRank, Rank next,
+      Consumer<MessageBuilder> setup) {
+    MessageBuilder mb = builder(player, message, oldRank, next);
+    if (setup != null) {
+      setup.accept(mb);
+    }
     return mb.toComponent(player).decoration(TextDecoration.ITALIC, false);
   }
 

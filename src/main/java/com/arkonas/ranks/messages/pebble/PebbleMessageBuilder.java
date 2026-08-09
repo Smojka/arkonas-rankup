@@ -113,11 +113,19 @@ public class PebbleMessageBuilder implements MessageBuilder {
     return processor(player).process(message);
   }
 
+  /**
+   * The message pipeline. Pebble runs <em>before</em> PlaceholderAPI, never after: a placeholder can
+   * expand to text the player controls (their display name, a nickname plugin, a town/faction name),
+   * and feeding that into the template engine would let a player smuggle
+   * <code>{{ ... }}</code>/<code>{% ... %}</code> into a template that is evaluated with the plugin's
+   * own context objects — and, via a rank's {@code commands:}, into a string dispatched from the
+   * console. Placeholders resolved after the template are plain text substitution and cannot be
+   * re-parsed as template syntax.
+   */
   private TextProcessor processor(Player player) {
     Map<String, Object> context = getContext(player);
     return new TextProcessorBuilder()
         .legacy(context, plugin.getPlaceholders())
-        .papi(player)
         .pebble(plugin.getLogger(), context, plugin.getPlaceholders())
         .papi(player)
         .colour()
@@ -130,7 +138,6 @@ public class PebbleMessageBuilder implements MessageBuilder {
     Map<String, Object> context = getContext(player);
     return new TextProcessorBuilder()
         .legacy(context, plugin.getPlaceholders())
-        .papi(player)
         .pebble(plugin.getLogger(), context, plugin.getPlaceholders())
         .papi(player)
         .create();

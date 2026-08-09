@@ -154,11 +154,41 @@ public class RankupHelper {
 
     RankElement<Rank> rankElement = rankups.getByPlayer(player);
     Rank rank = rankElement.getRank();
-    rank.applyRequirements(player);
+    if (!applyCost(player, rank)) {
+      return;
+    }
     applyCooldown(player);
 
     doRankup(player, rankElement);
     sendRankupMessages(player, rankElement);
+  }
+
+  /**
+   * Charges a rank's costs, reporting whether they were all taken.
+   *
+   * <p>Every path that grants a rank must go through this and stop when it returns false. A
+   * deduction can refuse (an economy rejects the withdrawal, a points plugin is down, the player's
+   * balance moved between the check and the charge) and the deductions throw rather than swallow it,
+   * precisely so the rank is not granted for free. This turns that into a clean refusal with a
+   * message instead of an "internal error" stack trace.
+   *
+   * @param player the player being charged
+   * @param rank the rank whose requirements are being paid
+   * @return true if the costs were taken and the caller may grant the rank
+   */
+  public boolean applyCost(Player player, Rank rank) {
+    try {
+      rank.applyRequirements(player);
+      return true;
+    } catch (RuntimeException e) {
+      plugin.getLogger().log(java.util.logging.Level.WARNING,
+          "Cancelled a rankup/prestige for " + player.getName()
+              + ": the cost could not be taken in full", e);
+      player.sendMessage(org.bukkit.ChatColor.RED
+          + "That could not be completed because the cost could not be taken."
+          + " Please contact an administrator.");
+      return false;
+    }
   }
 
   /**
@@ -183,11 +213,38 @@ public class RankupHelper {
 
     RankElement<Rank> rankElement = rankups.getByPlayer(player);
     Rank rank = rankElement.getRank();
-    rank.applyRequirements(player);
+    if (!applyCost(player, rank)) {
+      return false;
+    }
 
     doRankup(player, rankElement);
     sendRankupMessages(player, rankElement);
+
+    // "advanced" means the player's rank actually changed, not just that the transfer was attempted.
+    // Callers loop on this (auto-max, /maxrankup); if the group change is a no-op — permission-rankup
+    // mode, or a permission backend that silently failed — reporting true would charge the player for
+    // the same rank on every pass until the iteration cap.
+    if (rankups.getByPlayer(player) == rankElement) {
+      // in permission-rankup mode the rank is granted by the rank's own commands, which a permission
+      // plugin may only apply on the next tick, so a same-tick stall there is expected, not a fault
+      if (!config.getBoolean("permission-rankup")) {
+        warnNoProgressOnce(player, rank);
+      }
+      return false;
+    }
     return true;
+  }
+
+  /** Players already warned about a stalled rank change, so a broken setup logs once, not per tick. */
+  private final java.util.Set<java.util.UUID> warnedNoProgress = new java.util.HashSet<>();
+
+  private void warnNoProgressOnce(Player player, Rank rank) {
+    if (warnedNoProgress.add(player.getUniqueId())) {
+      plugin.getLogger().warning(player.getName() + " met the requirements for a rankup from '"
+          + rank.getRank() + "' but their rank did not change afterwards. Automatic progression is"
+          + " stopped for them so the same rank is not charged again. Check that the permission"
+          + " plugin is applying group changes.");
+    }
   }
 
   public boolean checkRankup(Player player) {
@@ -259,7 +316,9 @@ public class RankupHelper {
 
     RankElement<Prestige> rankElement = plugin.getPrestiges().getByPlayer(player);
     Prestige prestige = rankElement.getRank();
-    prestige.applyRequirements(player);
+    if (!applyCost(player, prestige)) {
+      return;
+    }
 
     applyCooldown(player);
     doPrestige(player, rankElement);

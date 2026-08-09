@@ -88,7 +88,11 @@ public class Gui implements InventoryHolder {
     return gui;
   }
 
+  /** The button id behind a slot, or 0 (no button) for any slot outside the grid. */
   public int getNr(int slot) {
+    if (slot < 0 || slot >= slots.length) {
+      return 0;
+    }
     return slots[slot];
   }
 

@@ -8,13 +8,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import com.arkonas.ranks.menu.AbstractMenu;
 import com.arkonas.ranks.menu.MenuModule;
-import com.arkonas.ranks.menu.MenuText;
-import com.arkonas.ranks.menu.ProgressBar;
-import com.arkonas.ranks.menu.RequirementItemRenderer;
+import com.arkonas.ranks.menu.RankLore;
 import com.arkonas.ranks.ranks.Rank;
 import com.arkonas.ranks.ranks.RankElement;
 import com.arkonas.ranks.ranks.Rankups;
-import com.arkonas.ranks.requirements.Requirement;
 
 /**
  * The full rankup ladder as a paginated map: completed ranks are glowing green
@@ -72,26 +69,46 @@ public class RankPathMenu extends LadderMenu<Rank> {
       case CURRENT: {
         Component name = text.component(player,
             text.raw("path.current", "&d{{rank.rank}} &7» &f{{next.rank}}"), rank, next);
-        List<Component> lore = requirementLines(element, true);
-        lore.add(text.component(player, text.raw("path.click-rankup", "&eClick to rankup")));
+        List<Component> lore = manualLore(rank, next, RankLore.CURRENT, true);
+        if (lore == null) {
+          lore = requirementLines(element, true);
+          lore.add(text.component(player, text.raw("path.click-rankup", "&eClick to rankup")));
+        }
         return head(player.getUniqueId(), player.getName(), name, lore, true);
       }
       case COMPLETE: {
         Component name = text.component(player,
             text.raw("path.complete", "&a{{rank.rank}} &7(completed)"), rank, next);
-        return icon(Material.LIME_STAINED_GLASS_PANE, name, List.of(), true);
+        List<Component> lore = manualLore(rank, next, RankLore.COMPLETE, false);
+        return icon(Material.LIME_STAINED_GLASS_PANE, name, lore == null ? List.of() : lore, true);
       }
       default: {
         Component name = text.component(player,
             text.raw("path.locked", "&c{{rank.rank}} &7» &f{{next.rank}}"), rank, next);
-        return icon(Material.RED_STAINED_GLASS_PANE, name, requirementLines(element, false), false);
+        List<Component> lore = manualLore(rank, next, RankLore.LOCKED, false);
+        if (lore == null) {
+          lore = requirementLines(element, false);
+        }
+        return icon(Material.RED_STAINED_GLASS_PANE, name, lore, false);
       }
     }
+  }
+
+  /** The rank's hand-written {@code lore:} from rankups.yml, or null when it has none. */
+  private List<Component> manualLore(Rank rank, Rank next, String variant, boolean showProgress) {
+    RankLore lore = module.getRankLore();
+    return lore.render(player, rank, next, variant,
+        () -> lore.requirementLines(player, rank, next, showProgress),
+        lore.rewards(rank, "rankup"));
   }
 
   @Override
   protected void onEntryClick(RankElement<Rank> element, EntryState state) {
     if (state == EntryState.CURRENT) {
+      // the path is reachable with only rankup.ranks; ranking up from it still needs rankup.rankup
+      if (module.denied(player, com.arkonas.ranks.menu.MenuModule.PERM_RANKUP)) {
+        return;
+      }
       theme.playSound(player, "click");
       defer(() -> new RankupMenu(module, player, this, ladder).open());
     }
@@ -103,24 +120,7 @@ public class RankPathMenu extends LadderMenu<Rank> {
   }
 
   private List<Component> requirementLines(RankElement<Rank> element, boolean showProgress) {
-    List<Component> lines = new ArrayList<>();
-    Rank rank = element.getRank();
-    RequirementItemRenderer renderer = module.getRequirementRenderer();
-    for (Requirement requirement : rank.getRequirements().getRequirements(player)) {
-      boolean money = RequirementItemRenderer.isMoney(requirement.getName());
-      double total = requirement.getTotal(player);
-      String friendly = renderer.friendlyName(requirement.getName());
-      String filter = money ? "money" : "simple";
-      String line = "&7• &f" + friendly + ": &b{{ value | " + filter + " }}";
-      if (showProgress) {
-        double remaining = requirement.getRemaining(player);
-        double fraction = total <= 0 ? 1 : Math.max(0, total - remaining) / total;
-        line = MenuText.sub(line + " &7({percent}%)",
-            java.util.Map.of("percent", String.valueOf(ProgressBar.percent(fraction))));
-      }
-      String finalLine = line;
-      lines.add(text.component(player, finalLine, mb -> mb.replaceKey("value", total)));
-    }
-    return lines;
+    Rank next = element.hasNext() ? element.getNext().getRank() : null;
+    return module.getRankLore().requirementLines(player, element.getRank(), next, showProgress);
   }
 }

@@ -20,7 +20,8 @@ class EconomyRegistryTest {
       }
 
       @Override
-      public void withdrawPlayer(Player player, double amount) {
+      public boolean withdrawPlayer(Player player, double amount) {
+        return true;
       }
 
       @Override

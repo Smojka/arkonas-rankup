@@ -14,6 +14,12 @@ first:
   #commands:
   #- 'eco give {{player}} 5000'
   #- 'broadcast &d{{player}} reached their first prestige!'
+  # OPTIONAL hand-written menu lore, exactly as in rankups.yml: `lore` plus the
+  # per-screen `lore-current` / `lore-locked` / `lore-complete` / `lore-info`
+  # overrides, with {requirements} and {rewards} expanding inside them.
+  #lore:
+  #- '&d&lPRESTIGE 1'
+  #- '{requirements}'
 P1example:
   from: 'D'
   to: 'A'

@@ -62,6 +62,9 @@ public class AutoRankupTest extends RankupTest {
     PlayerMock player = server.addPlayer();
     plugin.getEconomy().setPlayer(player, 5000);
     groupProvider.transferGroup(player.getUniqueId(), null, "A");
+    // rankup.auto ships as default: true, so "without the permission" means explicitly denied —
+    // which is what an admin does on a real server, and what this test is about
+    player.addAttachment(plugin, "rankup.auto", false);
     plugin.getConfig().set("auto.max", true);
 
     plugin.autoRankup.run();

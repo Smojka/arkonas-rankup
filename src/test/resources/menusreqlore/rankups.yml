@@ -1,0 +1,17 @@
+Aexample:
+  rank: 'A'
+  next: 'B'
+  requirements:
+    - 'money 1000'
+    - 'playtime-minutes 90'
+    - 'permission rankup.vip'
+Bexample:
+  rank: 'B'
+  next: 'C'
+  requirements:
+    - 'money 500'
+Cexample:
+  rank: 'C'
+  next: 'D'
+  requirements:
+    - 'money 500'

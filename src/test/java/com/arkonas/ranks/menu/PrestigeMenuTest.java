@@ -22,6 +22,9 @@ public class PrestigeMenuTest extends RankupTest {
   @Test
   public void prestigeReadyWhenEligibleWithMoney() {
     PlayerMock player = server.addPlayer();
+    // the list opens with rankup.prestiges; opening/confirming the prestige needs rankup.prestige
+    player.addAttachment(plugin, "rankup.prestige", true);
+    player.addAttachment(plugin, "rankup.prestiges", true);
     groupProvider.transferGroup(player.getUniqueId(), null, "B");
     plugin.getEconomy().setPlayer(player, 100000);
 
@@ -36,6 +39,9 @@ public class PrestigeMenuTest extends RankupTest {
   @Test
   public void prestigeUnmetWithoutMoney() {
     PlayerMock player = server.addPlayer();
+    // the list opens with rankup.prestiges; opening/confirming the prestige needs rankup.prestige
+    player.addAttachment(plugin, "rankup.prestige", true);
+    player.addAttachment(plugin, "rankup.prestiges", true);
     groupProvider.transferGroup(player.getUniqueId(), null, "B");
     plugin.getEconomy().setPlayer(player, 0);
 
@@ -48,6 +54,9 @@ public class PrestigeMenuTest extends RankupTest {
   @Test
   public void prestigeListOpensAndCurrentClickOpensPrestige() {
     PlayerMock player = server.addPlayer();
+    // the list opens with rankup.prestiges; opening/confirming the prestige needs rankup.prestige
+    player.addAttachment(plugin, "rankup.prestige", true);
+    player.addAttachment(plugin, "rankup.prestiges", true);
     groupProvider.transferGroup(player.getUniqueId(), null, "B");
     plugin.getEconomy().setPlayer(player, 100000);
 

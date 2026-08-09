@@ -21,6 +21,31 @@ Aexample:
   #commands:
   # this will run when a player ranks up from A to B.
   #- 'say {{player}} well done for ranking up from {{rank.rank}} to {{next.rank}}!'
+  #
+  # OPTIONAL hand-written lore for this rank's menu items. Write it yourself
+  # instead of letting the plugin generate the requirement list.
+  #   {requirements}  the generated requirement lines, put wherever you want them
+  #   {rewards}       the rewards block (confirmation panel only)
+  # & codes, &#RRGGBB hex, MiniMessage, {{rank.rank}}/{{next.rank}} and
+  # PlaceholderAPI all work. Declaring lore REPLACES the generated lore on that
+  # item, so add {requirements} back if you still want the costs shown.
+  # An empty entry ('') stays as a blank spacer line, first and last included,
+  # so you can pad the tooltip above and below.
+  #lore:
+  #- ''
+  #- '&e&lREQUIREMENTS'
+  #- '{requirements}'
+  #- ''
+  #- '&7Unlocks the &f{{next.rank}} &7mine'
+  #- ''
+  #
+  # Optional per-screen overrides of the line above. Each falls back to `lore`.
+  #   lore-current   this rank in the rank path (the rank the player is on)
+  #   lore-locked    a rank the player has not reached yet
+  #   lore-complete  a rank the player has already passed
+  #   lore-info      the info panel on the rankup confirmation screen
+  #lore-complete:
+  #- '&aAlready earned'
 Bexample:
   rank: 'B'
   next: 'C'

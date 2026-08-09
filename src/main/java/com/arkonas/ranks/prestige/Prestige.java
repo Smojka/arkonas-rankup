@@ -53,7 +53,7 @@ public class Prestige extends Rank {
       if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
         string = PlaceholderAPI.setPlaceholders(player, string);
       }
-      Bukkit.dispatchCommand(Bukkit.getConsoleSender(), string);
+      com.arkonas.ranks.util.ConsoleCommand.dispatch(plugin.getLogger(), string);
     }
   }
 

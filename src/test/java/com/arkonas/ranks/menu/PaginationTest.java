@@ -18,6 +18,7 @@ public class PaginationTest extends RankupTest {
   @Test
   public void firstPageIsFullAndPagesToTheSecond() {
     PlayerMock player = server.addPlayer();
+    player.addAttachment(plugin, "rankup.ranks", true);
     groupProvider.transferGroup(player.getUniqueId(), null, "A");
 
     plugin.getMenuModule().openRankPath(player);

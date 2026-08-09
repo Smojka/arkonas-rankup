@@ -55,6 +55,12 @@ public class ShadowDeserializer {
 
       RankSerialized serialized = new RankSerialized(rank, next, displayName, commands, requirements, prestigeRequirements, messages, costMultiplier);
 
+      // capture the hand-written menu lore keys from TOML too, matching the YAML path
+      Map<String, List<String>> lore = readLore(value);
+      if (lore != null) {
+        serialized.setLore(lore);
+      }
+
       // capture a per-rank celebration: override from TOML too, matching the YAML path, preserving
       // value types (booleans/numbers/lists) so EffectsListener parses them correctly
       Object celebrationObject = value.get("celebration");
@@ -65,6 +71,40 @@ public class ShadowDeserializer {
       ranksList.add(serialized);
     }
     return ranksList;
+  }
+
+  /**
+   * TOML twin of the YAML {@code readLore}: each {@code lore} / {@code lore-<variant>}
+   * key accepts a single string or an array of lines.
+   *
+   * @return the populated keys, or null when the rank declares no lore at all
+   */
+  private static Map<String, List<String>> readLore(UnmodifiableConfig value) {
+    Map<String, List<String>> lore = null;
+    for (String key : RankSerialized.LORE_KEYS) {
+      Object raw = value.get(key);
+      List<String> lines;
+      if (raw instanceof List) {
+        lines = new ArrayList<>();
+        for (Object line : (List<?>) raw) {
+          if (line != null) {
+            lines.add(String.valueOf(line));
+          }
+        }
+      } else if (raw != null) {
+        lines = Collections.singletonList(String.valueOf(raw));
+      } else {
+        continue;
+      }
+      if (lines.isEmpty()) {
+        continue;
+      }
+      if (lore == null) {
+        lore = new HashMap<>();
+      }
+      lore.put(key, lines);
+    }
+    return lore;
   }
 
   /** Flattens a TOML sub-config to dotted leaf keys with their original typed values. */

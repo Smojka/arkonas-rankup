@@ -38,12 +38,17 @@ public abstract class RankupTest {
     protected ServerMock server;
     protected ArkonasRanksPlugin plugin;
 
+    /** The permission backend the plugin runs against; override to simulate a faulty one. */
+    protected GroupProvider createGroupProvider() {
+        return new TestGroupProvider();
+    }
+
     @BeforeEach
     public void setup() {
         System.setProperty("RANKUP_TEST", "true");
 
         try {
-            groupProvider = new TestGroupProvider();
+            groupProvider = createGroupProvider();
 
             server = MockBukkit.mock();
             plugin = (ArkonasRanksPlugin) server.getPluginManager()
@@ -69,12 +74,27 @@ public abstract class RankupTest {
             }
 
             server.getPluginManager().enablePlugin(plugin);
+            registerDeclaredPermissions();
 
             // let rankup finish setting up
             server.getScheduler().performTicks(1);
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Registers the permissions declared in plugin.yml, which a real server does when it loads the
+     * plugin but MockBukkit does not. Without this every mock player fails {@code hasPermission},
+     * including the nodes that ship as {@code default: true} — so anything permission-gated (the
+     * menu screens) would look blocked in tests while being open to everyone in production.
+     */
+    private void registerDeclaredPermissions() {
+        for (org.bukkit.permissions.Permission permission : plugin.getDescription().getPermissions()) {
+            if (server.getPluginManager().getPermission(permission.getName()) == null) {
+                server.getPluginManager().addPermission(permission);
+            }
         }
     }
 

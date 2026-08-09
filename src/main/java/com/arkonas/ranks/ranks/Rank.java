@@ -52,7 +52,9 @@ public class Rank {
       if (string.isBlank()) {
           continue;
       }
-      Bukkit.dispatchCommand(Bukkit.getConsoleSender(), string);
+      // sanitised: the rendered string has had PlaceholderAPI applied to it, and a placeholder can
+      // resolve to text the player controls
+      com.arkonas.ranks.util.ConsoleCommand.dispatch(plugin.getLogger(), string);
     }
   }
 

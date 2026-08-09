@@ -1,0 +1,15 @@
+first:
+  from: 'B'
+  to: 'A'
+  next: 'P1'
+  requirements:
+    - 'money 10000'
+  lore:
+    - '&dprestige handwritten'
+P1example:
+  from: 'B'
+  to: 'A'
+  rank: 'P1'
+  next: 'P2'
+  requirements:
+    - 'money 20000'

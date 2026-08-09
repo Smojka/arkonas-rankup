@@ -40,43 +40,39 @@ public class RequirementItemRenderer {
     MenuTheme theme = module.getTheme();
     MenuText text = module.getText();
     MenuIcon icon = module.getIcons().iconFor(requirement.getName());
-    boolean met = requirement.check(player);
+    // one read of the requirement per item, so pre-building the fill animation does not ask a
+    // plugin hook the same question once per reveal step
+    RequirementLore.Snapshot snapshot = module.getRequirementLore().snapshot(player, requirement);
+    boolean met = snapshot.met();
     String colour = met ? theme.success() : theme.danger();
 
     Component name = text.component(player,
         "<" + colour + "><bold>" + friendlyName(requirement.getName()) + "</bold>");
 
+    // the same {name}/{current}/{required}/{percent}/{bar}/{status} vocabulary the generated
+    // requirement block offers, so both surfaces are styled from one set of tokens. The
+    // animated frames pass barSegments, which pins {bar} to the reveal step.
+    Map<String, String> tokens =
+        module.getRequirementLore().tokens(requirement, snapshot, barSegments);
+
     List<Component> lore = new ArrayList<>();
     if (requirement instanceof ProgressiveRequirement) {
-      double total = requirement.getTotal(player);
-      double remaining = requirement.getRemaining(player);
-      double progress = Math.max(0, total - remaining);
-      double fraction = total <= 0 ? 1 : progress / total;
-      int filled = barSegments >= 0 ? barSegments : theme.progressBar().filled(fraction);
-      // animated frames advance whole cells, so drive smooth/gradient off filled/length there;
-      // the static (settled) frame uses the true fraction for sub-cell smoothing.
-      double barFraction = barSegments >= 0
-          ? (double) filled / theme.progressBar().length()
-          : fraction;
-      String bar = theme.renderBar(filled, barFraction);
-      int percent = ProgressBar.percent(fraction);
-
       boolean money = isMoney(requirement.getName());
       String costMessage = money
           ? text.raw("rankup.requirement-money", "&7Cost: &6{{ value | money }}")
           : text.raw("rankup.requirement-simple", "&7Need: &f{{ value | simple }}");
-      double totalValue = total;
-      lore.add(text.component(player, costMessage, mb -> mb.replaceKey("value", totalValue)));
+      double totalValue = snapshot.total();
+      lore.add(text.component(player, MenuText.sub(costMessage, tokens),
+          mb -> mb.replaceKey("value", totalValue)));
 
       String progressMessage = MenuText.sub(
-          text.raw("rankup.requirement-progress", "&b{bar} &7{percent}%"),
-          Map.of("bar", bar, "percent", String.valueOf(percent)));
+          text.raw("rankup.requirement-progress", "&b{bar} &7{percent}%"), tokens);
       lore.add(text.component(player, progressMessage));
     }
 
-    lore.add(text.component(player, met
+    lore.add(text.component(player, MenuText.sub(met
         ? text.raw("rankup.requirement-met", "&a✔ Requirement met")
-        : text.raw("rankup.requirement-unmet", "&c✖ Not met yet")));
+        : text.raw("rankup.requirement-unmet", "&c✖ Not met yet"), tokens)));
 
     return icon.build(name, lore, met);
   }

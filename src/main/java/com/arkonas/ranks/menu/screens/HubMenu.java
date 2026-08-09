@@ -44,18 +44,25 @@ public class HubMenu extends AbstractMenu {
     this.prestigeSlot = module.getConfig().slot("hub", "prestige-slot", 24);
     this.leaderboardSlot = module.getConfig().slot("hub", "leaderboard-slot", 40);
 
-    setItem(pathSlot, button(Material.BOOK, "hub.buttons.path.name", "&bRank Path",
-        "hub.buttons.path.lore", "&7View the full ladder", true));
-    setItem(rankupSlot, button(Material.EMERALD, "hub.buttons.rankup.name", "&aRankup",
-        "hub.buttons.rankup.lore", "&7Advance to the next rank", true));
+    // a button the player has no permission for is greyed out, and the click handler re-checks:
+    // the hub is reachable from /ranks, so it must not become a way around the command permissions
+    setItem(pathSlot, module.allowed(player, MenuModule.PERM_RANKS)
+        ? button(Material.BOOK, "hub.buttons.path.name", "&bRank Path",
+            "hub.buttons.path.lore", "&7View the full ladder", true)
+        : disabledButton(Material.GRAY_DYE, "hub.buttons.path.name", "&bRank Path"));
+    setItem(rankupSlot, module.allowed(player, MenuModule.PERM_RANKUP)
+        ? button(Material.EMERALD, "hub.buttons.rankup.name", "&aRankup",
+            "hub.buttons.rankup.lore", "&7Advance to the next rank", true)
+        : disabledButton(Material.GRAY_DYE, "hub.buttons.rankup.name", "&aRankup"));
 
-    boolean prestige = plugin.getPrestiges() != null;
+    boolean prestige = plugin.getPrestiges() != null
+        && module.allowed(player, MenuModule.PERM_PRESTIGE);
     setItem(prestigeSlot, prestige
         ? button(Material.NETHERITE_INGOT, "hub.buttons.prestige.name", "&dPrestige",
             "hub.buttons.prestige.lore", "&7Prestige at the top rank", true)
         : disabledButton(Material.GRAY_DYE, "hub.buttons.prestige.name", "&dPrestige"));
 
-    boolean stats = plugin.getStats() != null;
+    boolean stats = plugin.getStats() != null && module.allowed(player, MenuModule.PERM_TOP);
     setItem(leaderboardSlot, stats
         ? button(Material.GOLD_INGOT, "hub.buttons.leaderboard.name", "&6Leaderboard",
             "hub.buttons.leaderboard.lore", "&7Top rankups & prestiges", true)
@@ -67,18 +74,30 @@ public class HubMenu extends AbstractMenu {
   @Override
   protected void handleClick(int slot, ClickType click) {
     if (slot == pathSlot) {
+      if (module.denied(player, MenuModule.PERM_RANKS)) {
+        return;
+      }
       theme.playSound(player, "click");
       boolean multi = plugin.getLadders() != null && plugin.getLadders().hasMultiple();
       AbstractMenu next = multi ? new LadderPickerMenu(module, player, this)
           : new RankPathMenu(module, player, this);
       defer(next::open);
     } else if (slot == rankupSlot) {
+      if (module.denied(player, MenuModule.PERM_RANKUP)) {
+        return;
+      }
       theme.playSound(player, "click");
       defer(() -> new RankupMenu(module, player, this).open());
     } else if (slot == prestigeSlot && plugin.getPrestiges() != null) {
+      if (module.denied(player, MenuModule.PERM_PRESTIGE)) {
+        return;
+      }
       theme.playSound(player, "click");
       defer(() -> new PrestigeMenu(module, player, this).open());
     } else if (slot == leaderboardSlot && plugin.getStats() != null) {
+      if (module.denied(player, MenuModule.PERM_TOP)) {
+        return;
+      }
       theme.playSound(player, "click");
       defer(() -> new LeaderboardMenu(module, player, this, false).open());
     }

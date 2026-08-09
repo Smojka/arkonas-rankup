@@ -6,13 +6,13 @@ import java.util.Map;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 import com.arkonas.ranks.menu.AbstractMenu;
 import com.arkonas.ranks.menu.MenuModule;
 import com.arkonas.ranks.menu.MenuText;
+import com.arkonas.ranks.menu.RankLore;
 import com.arkonas.ranks.ranks.Rank;
 import com.arkonas.ranks.requirements.Requirement;
 
@@ -38,6 +38,8 @@ public abstract class ConfirmScreen extends AbstractMenu {
 
   private ItemStack confirmBase;
   private ItemStack confirmGlow;
+  /** Set once the confirm click has been accepted, so repeat clicks in the same tick are ignored. */
+  private boolean confirmed;
   private int lastPulsePhase = -1;
   @Getter
   private long shownCooldownSeconds = -1;
@@ -91,6 +93,7 @@ public abstract class ConfirmScreen extends AbstractMenu {
     Rank next = nextRank();
     lastPulsePhase = -1;
     shownCooldownSeconds = -1;
+    confirmed = false;
 
     if (current == null || next == null || !canAdvance()) {
       state = State.BLOCKED;
@@ -204,10 +207,15 @@ public abstract class ConfirmScreen extends AbstractMenu {
     Component name =
         text.component(player, text.raw(menuKey() + ".info-name", nameDefault), current, next);
     String rewards = rewardsBlock(current);
-    String loreRaw = text.raw(menuKey() + ".info-lore",
-        "&7From &f{{rank.rank}} &7to &f{{next.rank}}\n&r\n&e&lRewards:\n{rewards}");
-    List<Component> lore =
-        text.lore(player, MenuText.sub(loreRaw, Map.of("rewards", rewards)), current, next);
+    RankLore rankLore = module.getRankLore();
+    // a hand-written `lore:` on the rank replaces the locale info-lore entirely
+    List<Component> lore = rankLore.render(player, current, next, RankLore.INFO,
+        () -> rankLore.requirementLines(player, current, next, true), rewards);
+    if (lore == null) {
+      String loreRaw = text.raw(menuKey() + ".info-lore",
+          "&7From &f{{rank.rank}} &7to &f{{next.rank}}\n&r\n&e&lRewards:\n{rewards}");
+      lore = text.lore(player, MenuText.sub(loreRaw, Map.of("rewards", rewards)), current, next);
+    }
     return icon(material, name, lore, true);
   }
 
@@ -217,25 +225,7 @@ public abstract class ConfirmScreen extends AbstractMenu {
    * rank wins; otherwise the locale {@code rewards-default}.
    */
   private String rewardsBlock(Rank current) {
-    ConfigurationSection section = current == null ? null : current.getSection();
-    if (section != null) {
-      String override = firstNonBlank(
-          section.getString(menuKey() + ".rewards"),
-          section.getString("rewards"));
-      if (override != null) {
-        return override;
-      }
-    }
-    return text.raw(menuKey() + ".rewards-default", "&8• &7Unlocks the &f{{next.rank}} &7rank");
-  }
-
-  private static String firstNonBlank(String... values) {
-    for (String value : values) {
-      if (value != null && !value.isBlank()) {
-        return value;
-      }
-    }
-    return null;
+    return module.getRankLore().rewards(current, menuKey());
   }
 
   // --- animation ------------------------------------------------------------
@@ -277,6 +267,13 @@ public abstract class ConfirmScreen extends AbstractMenu {
   @Override
   protected void handleClick(int slot, ClickType click) {
     if (state == State.READY && slot == confirmSlot) {
+      // one confirm per screen: the action is deferred to the next tick, and a client can deliver
+      // several click packets within the same tick, so without this a click-spamming player queues
+      // several rankups off a single screen (each one charges them again)
+      if (confirmed) {
+        return;
+      }
+      confirmed = true;
       theme.playSound(player, "click");
       defer(() -> {
         player.closeInventory();

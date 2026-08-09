@@ -20,8 +20,9 @@ public class PlayerPointsDeductibleRequirement extends PlayerPointsRequirement
   @Override
   public void apply(Player player, double multiplier) {
     // getValueDouble (not getValueInt) so a non-integer configured cost never throws at deduction
-    // time after the double-based affordability check already accepted it
-    access().take(player.getUniqueId(), (int) Math.round(getValueDouble() * multiplier));
+    // time after the double-based affordability check already accepted it.
+    // ceil, not round, so the deduction is never less than the cost that was checked
+    access().take(player.getUniqueId(), (int) Math.ceil(getValueDouble() * multiplier - EPSILON));
   }
 
   /** Deducts the discounted points cost so the amount taken matches {@link #getTotal(Player)}. */

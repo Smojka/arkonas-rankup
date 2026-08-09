@@ -9,6 +9,14 @@ import org.bukkit.configuration.MemoryConfiguration;
 @Data
 public class RankSerialized {
 
+  /**
+   * The per-rank menu lore keys the deserializers lift out of the rank's config
+   * section. {@code lore} is the base; the {@code lore-<variant>} keys override it
+   * on a single screen (see {@code RankLore}).
+   */
+  public static final List<String> LORE_KEYS =
+      List.of("lore", "lore-current", "lore-locked", "lore-complete", "lore-info");
+
   private final String rank;
   private final String next;
 
@@ -31,6 +39,14 @@ public class RankSerialized {
    */
   private Map<String, Object> celebration;
 
+  /**
+   * Hand-written menu lore for this rank, keyed by the config key it came from
+   * ({@code lore}, {@code lore-current}, {@code lore-locked}, {@code lore-complete},
+   * {@code lore-info}), or null when the rank declares none. Attached by the
+   * deserializers so {@code RankLore} can read it back off the rank's section.
+   */
+  private Map<String, List<String>> lore;
+
   public ConfigurationSection getMessagesAsSection() {
     ConfigurationSection section = new MemoryConfiguration();
     for (Map.Entry<String, String> entry : messages.entrySet()) {
@@ -41,6 +57,11 @@ public class RankSerialized {
     if (celebration != null) {
       for (Map.Entry<String, Object> entry : celebration.entrySet()) {
         section.set("celebration." + entry.getKey(), entry.getValue());
+      }
+    }
+    if (lore != null) {
+      for (Map.Entry<String, List<String>> entry : lore.entrySet()) {
+        section.set(entry.getKey(), entry.getValue());
       }
     }
     return section;

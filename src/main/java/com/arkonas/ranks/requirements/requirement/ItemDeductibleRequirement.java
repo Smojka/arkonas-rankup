@@ -20,8 +20,14 @@ public class ItemDeductibleRequirement extends ItemRequirement implements Deduct
   @Override
   public void apply(Player player, double multiplier) {
     // use the raw configured count here (not getTotal, which already folds in the cost factor) so
-    // apply(player) below can pass costFactor without applying the discount twice
-    int count = (int) Math.round(getValueDouble() * multiplier);
+    // apply(player) below can pass costFactor without applying the discount twice.
+    // ceil, not round: the affordability check compares against the exact double, so a cost of 4.4
+    // needs 5 items in the inventory — rounding the deduction down to 4 would let the player keep
+    // one and pay less than they were checked for. Rounding up can never charge more than checked.
+    int count = (int) Math.ceil(getValueDouble() * multiplier - EPSILON);
+    if (count <= 0) {
+      return;
+    }
 
     PlayerInventory inventory = player.getInventory();
     ItemStack[] contents;

@@ -1,0 +1,30 @@
+# Only the keys the requirement-lore tests need; everything else falls back to
+# the built-in defaults.
+menu:
+  requirements:
+    header:
+      - ''
+      - 'REQUIREMENTS'
+    footer:
+      - 'end of list'
+    line: '- {name} needs {required}'
+    line-progress: '| {name}: {current}/{required} ({percent}%)'
+    line-unmet: '! {name}: {current}/{required} ({percent}%) {status}'
+    line-flat: '? {name} {status}'
+    status-met: 'YES'
+    status-unmet: 'NO'
+    time-format: '{days}d {hours}h {minutes}m'
+    formats:
+      default: simple
+    types:
+      playtime-minutes:
+        format: time
+        line-unmet:
+          - '| {name}'
+          - '  have {current}'
+          - '  need {required} ({percent}%)'
+  rankup:
+    requirement-names:
+      money: 'Money'
+      playtime-minutes: 'Playtime'
+      permission: 'Permission'

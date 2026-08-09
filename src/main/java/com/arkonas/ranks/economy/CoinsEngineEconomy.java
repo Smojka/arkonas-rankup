@@ -60,11 +60,13 @@ final class CoinsEngineEconomy implements Economy {
   }
 
   @Override
-  public void withdrawPlayer(Player player, double amount) {
+  public boolean withdrawPlayer(Player player, double amount) {
     try {
-      removeBalance.invoke(null, player, currency, amount);
-    } catch (Throwable ignored) {
-      // best effort
+      Object result = removeBalance.invoke(null, player, currency, amount);
+      return !(result instanceof Boolean) || (Boolean) result;
+    } catch (Throwable t) {
+      // nothing was removed, so the caller must not grant the rank
+      return false;
     }
   }
 

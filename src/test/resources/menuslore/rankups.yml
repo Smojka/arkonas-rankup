@@ -1,0 +1,30 @@
+a:
+  rank: 'A'
+  next: 'B'
+  requirements:
+    - 'money 100'
+  lore-complete:
+    - '&acompleted line'
+b:
+  rank: 'B'
+  next: 'C'
+  requirements:
+    - 'money 100'
+  rankup:
+    rewards: '&8• custom reward'
+  lore:
+    - ''
+    - '&e&lHANDWRITTEN'
+    - '{requirements}'
+    - '&7next is {{next.rank}}'
+    - ''
+  lore-info:
+    - '&6info panel line'
+    - '{rewards}'
+c:
+  rank: 'C'
+  next: 'D'
+  requirements:
+    - 'money 100'
+  lore-locked:
+    - '&clocked handwritten'

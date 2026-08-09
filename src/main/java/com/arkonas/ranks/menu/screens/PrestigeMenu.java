@@ -68,6 +68,11 @@ public class PrestigeMenu extends ConfirmScreen {
 
   @Override
   protected void performConfirm() {
+    // re-checked at the moment of the action: this screen is reachable from the hub and the
+    // prestige list, neither of which requires rankup.prestige to open
+    if (module.denied(player, com.arkonas.ranks.menu.MenuModule.PERM_PRESTIGE)) {
+      return;
+    }
     plugin.getHelper().prestige(player);
   }
 }

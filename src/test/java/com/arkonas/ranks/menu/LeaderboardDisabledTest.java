@@ -24,6 +24,7 @@ public class LeaderboardDisabledTest extends RankupTest {
     assertNull(plugin.getStats(), "stats should be disabled by the fixture");
 
     PlayerMock viewer = server.addPlayer();
+    viewer.addAttachment(plugin, "rankup.top", true);
     plugin.getMenuModule().openLeaderboard(viewer, false);
     LeaderboardMenu menu = (LeaderboardMenu) viewer.getOpenInventory().getTopInventory().getHolder();
 

@@ -167,7 +167,16 @@ public final class RebirthManager {
       return false;
     }
 
-    requirements.applyRequirements(player);
+    try {
+      requirements.applyRequirements(player);
+    } catch (RuntimeException e) {
+      // a refused deduction must not grant the rebirth group
+      plugin.getLogger().log(java.util.logging.Level.WARNING,
+          "Cancelled a rebirth for " + player.getName() + ": the cost could not be taken in full", e);
+      player.sendMessage(ChatColor.RED
+          + "Your rebirth could not be completed because the cost could not be taken.");
+      return false;
+    }
 
     String current = currentGroup(player);
     String next = nextGroup(player);
@@ -223,7 +232,7 @@ public final class RebirthManager {
         rendered = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, rendered);
       }
       if (!rendered.isBlank()) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), rendered);
+        com.arkonas.ranks.util.ConsoleCommand.dispatch(plugin.getLogger(), rendered);
       }
     }
   }

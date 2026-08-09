@@ -15,7 +15,12 @@ public class TokensDeductibleRequirement extends TokensRequirement implements De
 
   @Override
   public void apply(Player player, double multiplier) {
-    manager.removeTokens(player, Math.round(getValueDouble() * multiplier));
+    // ceil, not round, so the deduction is never less than the cost the affordability check used
+    long tokens = (long) Math.ceil(getValueDouble() * multiplier - EPSILON);
+    if (tokens <= 0) {
+      return;
+    }
+    manager.removeTokens(player, tokens);
   }
 
   /** Deducts the discounted token cost so the amount taken matches {@link #getTotal(Player)}. */

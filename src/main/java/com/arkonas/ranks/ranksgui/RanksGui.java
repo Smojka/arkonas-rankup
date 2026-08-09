@@ -19,7 +19,9 @@ public class RanksGui {
     @Getter
     private final Player player;
 
-    private int rankupSlot;
+    // -1 until the player's current rank is placed; a default of 0 made slot 0 act as the rankup
+    // button for anyone who is not in the ladder at all
+    private int rankupSlot = -1;
 
     @Getter
     private Inventory inventory;

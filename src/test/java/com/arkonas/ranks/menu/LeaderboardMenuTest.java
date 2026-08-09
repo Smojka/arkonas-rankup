@@ -19,6 +19,7 @@ public class LeaderboardMenuTest extends RankupTest {
   }
 
   private LeaderboardMenu openLoaded(PlayerMock viewer, boolean prestiges) {
+    viewer.addAttachment(plugin, "rankup.top", true);
     plugin.getMenuModule().openLeaderboard(viewer, prestiges);
     LeaderboardMenu menu = (LeaderboardMenu) viewer.getOpenInventory().getTopInventory().getHolder();
     plugin.getStats().flush();            // let the async top() query finish

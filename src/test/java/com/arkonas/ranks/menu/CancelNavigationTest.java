@@ -20,6 +20,9 @@ public class CancelNavigationTest extends RankupTest {
   @Test
   public void pathToRankupAndCancelReturnsToPath() {
     PlayerMock player = server.addPlayer();
+    // the path opens with rankup.ranks; clicking the current rank also needs rankup.rankup
+    player.addAttachment(plugin, "rankup.ranks", true);
+    player.addAttachment(plugin, "rankup.rankup", true);
     groupProvider.transferGroup(player.getUniqueId(), null, "A");
     plugin.getEconomy().setPlayer(player, 500);
 

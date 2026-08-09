@@ -23,6 +23,7 @@ public class CooldownCountdownTest extends RankupTest {
   @Test
   public void countdownTicksDownThenReadies() throws InterruptedException {
     PlayerMock player = server.addPlayer();
+    player.addAttachment(plugin, "rankup.rankup", true);
     groupProvider.transferGroup(player.getUniqueId(), null, "A");
     plugin.getEconomy().setPlayer(player, 1000);
 

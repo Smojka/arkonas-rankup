@@ -39,6 +39,16 @@ public class ListRankRequirements implements RankRequirements {
 
   @Override
   public void applyRequirements(Player player) {
+    // Re-verify immediately before charging. Callers are supposed to have checked already, but the
+    // check and the charge are separate calls with menu clicks, deferred tasks and other plugins'
+    // listeners in between, and a deduction that runs on an unmet requirement is a free rank.
+    // Throwing (rather than returning) aborts the caller before the group transfer, so a player can
+    // never end up ranked up without having paid.
+    if (!hasRequirements(player)) {
+      throw new IllegalStateException(
+          "Refusing to deduct rankup costs from " + player.getName()
+              + ": they no longer meet the requirements.");
+    }
     for (Requirement requirement : requirements) {
       if (requirement instanceof DeductibleRequirement) {
         ((DeductibleRequirement) requirement).apply(player);

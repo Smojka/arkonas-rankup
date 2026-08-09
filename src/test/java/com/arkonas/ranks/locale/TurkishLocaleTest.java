@@ -20,6 +20,7 @@ public class TurkishLocaleTest extends RankupTest {
   @Test
   public void testTurkishMenuConfirm() {
     PlayerMock player = server.addPlayer();
+    player.addAttachment(plugin, "rankup.rankup", true);
     plugin.getEconomy().setPlayer(player, 1000);
     groupProvider.transferGroup(player.getUniqueId(), null, "A");
 

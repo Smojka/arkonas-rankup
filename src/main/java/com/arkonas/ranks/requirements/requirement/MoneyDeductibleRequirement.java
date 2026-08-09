@@ -19,7 +19,16 @@ public class MoneyDeductibleRequirement extends MoneyRequirement implements Dedu
   @Override
   public void apply(Player player, double multiplier) {
     Economy economy = plugin.getEconomy();
-    economy.withdrawPlayer(player, getValueDouble() * multiplier);
+    double amount = getValueDouble() * multiplier;
+    if (amount <= 0) {
+      return;
+    }
+    // throw rather than swallow: the caller grants the rank straight after this returns, so a
+    // withdrawal that silently failed would be a free rankup
+    if (!economy.withdrawPlayer(player, amount)) {
+      throw new IllegalStateException("Economy refused to withdraw " + amount + " from "
+          + player.getName() + "; the rankup was cancelled.");
+    }
   }
 
   /**

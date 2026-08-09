@@ -5,6 +5,15 @@ import org.bukkit.entity.Player;
 import com.arkonas.ranks.ArkonasRanksPlugin;
 
 public abstract class Requirement implements Cloneable {
+
+  /**
+   * Slack for rounding an integer cost up. Deductions use {@code ceil(cost - EPSILON)} so they can
+   * never take less than the affordability check demanded, while a cost that is mathematically whole
+   * but lands a hair above it in binary floating point (e.g. {@code 20 * 0.15}) is not charged an
+   * extra unit.
+   */
+  protected static final double EPSILON = 1e-9;
+
   protected final ArkonasRanksPlugin plugin;
   @Getter
   protected final String name;

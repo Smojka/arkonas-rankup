@@ -23,6 +23,7 @@ public class InfoPanelTest extends RankupTest {
   }
 
   private RankupMenu openRankup(PlayerMock player) {
+    player.addAttachment(plugin, "rankup.rankup", true);
     plugin.getMenuModule().openRankup(player);
     return (RankupMenu) player.getOpenInventory().getTopInventory().getHolder();
   }

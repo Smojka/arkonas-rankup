@@ -9,6 +9,13 @@
 # All item names/lore support legacy & codes, &#RRGGBB hex and MiniMessage tags
 # (the message-format setting in config.yml applies here too). The wording lives
 # in the locale files under the "menu:" section.
+#
+# The generated requirement lines are templates too: "menu.requirements" in the
+# locale file styles them, one template per requirement state, with per-requirement
+# overrides under "types:" (see the README).
+#
+# To hand-write the lore of one rank instead of letting the plugin generate it,
+# add a "lore:" list to that rank in rankups.yml/prestiges.yml (see the README).
 
 # Frame-clock animations. period is in ticks (2 = ~10 fps). The single ticker is
 # started lazily when the first menu opens and cancelled when the last closes.

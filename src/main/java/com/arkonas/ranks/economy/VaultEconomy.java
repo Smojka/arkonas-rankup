@@ -15,8 +15,12 @@ public class VaultEconomy implements Economy {
     }
 
     @Override
-    public void withdrawPlayer(Player player, double amount) {
-        economy.withdrawPlayer(player, amount);
+    public boolean withdrawPlayer(Player player, double amount) {
+        // Vault reports the outcome; the previous code discarded it, so a refused withdrawal (bank
+        // plugin error, insufficient funds after a race) still let the rankup through for free
+        net.milkbowl.vault.economy.EconomyResponse response =
+            economy.withdrawPlayer(player, amount);
+        return response != null && response.transactionSuccess();
     }
 
     @Override

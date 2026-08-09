@@ -130,7 +130,7 @@ public final class MilestoneService implements MilestoneHook {
     }
     for (String command : rendered) {
       if (!command.isBlank()) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+        com.arkonas.ranks.util.ConsoleCommand.dispatch(plugin.getLogger(), command);
       }
     }
   }

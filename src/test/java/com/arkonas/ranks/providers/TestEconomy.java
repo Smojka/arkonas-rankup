@@ -16,8 +16,13 @@ public class TestEconomy implements Economy {
     }
 
     @Override
-    public void withdrawPlayer(Player player, double amount) {
-        balances.put(player.getUniqueId(), balances.getOrDefault(player.getUniqueId(), 0D) - amount);
+    public boolean withdrawPlayer(Player player, double amount) {
+        double balance = balances.getOrDefault(player.getUniqueId(), 0D);
+        if (balance < amount) {
+            return false;
+        }
+        balances.put(player.getUniqueId(), balance - amount);
+        return true;
     }
 
     public void setPlayer(Player player, double amount) {

@@ -21,7 +21,9 @@ public class MenuListener implements Listener {
 
   private final MenuModule module;
 
-  @EventHandler
+  // HIGHEST so a lower-priority plugin cannot un-cancel the event after this runs and let items be
+  // moved into a menu (a virtual inventory, so anything moved in is destroyed when it closes)
+  @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST)
   public void onClick(InventoryClickEvent event) {
     if (!(event.getWhoClicked() instanceof Player)) {
       return;
@@ -35,11 +37,14 @@ public class MenuListener implements Listener {
 
     Inventory clicked = event.getClickedInventory();
     if (clicked != null && clicked.equals(top)) {
-      menu.onClick(event.getSlot(), event.getClick());
+      int slot = event.getSlot();
+      if (slot >= 0 && slot < top.getSize()) {
+        menu.onClick(slot, event.getClick());
+      }
     }
   }
 
-  @EventHandler
+  @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST)
   public void onDrag(InventoryDragEvent event) {
     if (event.getView().getTopInventory().getHolder() instanceof AbstractMenu) {
       event.setCancelled(true);

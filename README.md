@@ -191,6 +191,7 @@ Aexample:
 | `commands` | Console commands. `{{player}}`, `{{rank.rank}}` (the old rank) and `{{next.rank}}` (the new one) are substituted, and PlaceholderAPI works. |
 | `cost-multiplier` | Scales every cost on this rank. Default `1.0`. |
 | `rankup:` | Per-rank message overrides: any locale path under `rankup.`, such as `requirements-not-met`, `success-public` or `list.current`. |
+| `lore:` | Hand-written menu lore for this rank, described under [hand-written rank lore](#hand-written-rank-lore). |
 | `celebration:` | Per-rank effects override, described under [effects](#per-rank-celebration-override). |
 
 ### Requirements that scale with prestige
@@ -640,6 +641,122 @@ Namespaced ids come from Oraxen (`oraxen:id`), Nexo (`nexo:id`), ItemsAdder
 (`itemsadder:pack:name`) or HeadDatabase (`hdb:id`), whichever of them is actually running. None is
 a hard dependency. If the plugin is missing, the icon falls back to a plain item. Namespaced ids are
 honoured in `requirement-icons` only.
+
+### Requirement lines
+
+The requirement block — what the rank path, the prestige list and the `{requirements}` token print —
+is a set of templates in the locale file, under `menu.requirements`. Nothing is mandatory: leave the
+section out and the block renders `• Money: 5,000 (100%)` exactly as before.
+
+```yaml
+menu:
+  requirements:
+    header: ['', '&e&lREQUIREMENTS']   # printed above the block, when the rank has requirements
+    footer: []
+    hide-met: false                    # drop requirements the player already finished
+    sort: config                       # config | unmet-first | met-first
+    line: '&7• &f{name}: &b{required}'
+    line-progress: '&7• &f{name}: &b{current}&7/&b{required} &7({percent}%)'
+    line-unmet: '&7▪ &f{name}: &c{current}&7/&f{required} &7({percent}%)'
+    line-flat: '&7▪ &f{name}: {status}'
+    status-met: '&a✔'
+    status-unmet: '&c✖'
+    time-format: '{days}d {hours}h {minutes}m'
+    formats:
+      default: simple
+    types:
+      playtime-minutes:
+        format: time
+        line-progress:
+          - '&7▪ &f{name}'
+          - '  &8have: &b{current}'
+          - '  &8need: &f{required} &7({percent}%)'
+```
+
+Every template is one string (split on `\n`) or a list, so one requirement can print several lines.
+Tokens are substituted before the text pipeline, so they mix freely with `&` codes, `&#RRGGBB`,
+MiniMessage, `{{rank.rank}}`, `{{ value | money }}` and PlaceholderAPI.
+
+| Token | Is |
+| --- | --- |
+| `{name}` | The requirement's display name, i.e. `rankup.requirement-names.<name>` or a title-cased fallback. |
+| `{current}` | How far the player has got, capped at the total. |
+| `{required}` | The total needed, after any cost multiplier. |
+| `{remaining}` | What is left. |
+| `{percent}` | Completion, 0-100, with no `%` sign. |
+| `{bar}` | The `theme.progress` bar from `menus.yml`. |
+| `{status}` | `status-met` or `status-unmet`. |
+| `{color}` | The theme's `success` / `danger` colour as a MiniMessage tag. |
+| `{type}`, `{sub}`, `{raw}` | The requirement's name, sub-requirement and raw configured value. |
+
+Which template is used, most specific first:
+
+| Key | Applies to |
+| --- | --- |
+| `line-flat-met` / `line-flat-unmet`, then `line-flat` | Requirements with nothing to count: `permission`, `world`, `group`, `advancement`… |
+| `line-progress-met` / `line-progress-unmet` | The rank the player is on, and the confirmation panel. |
+| `line-met` / `line-unmet` | Any screen, by state. |
+| `line-progress` | The rank the player is on, and the confirmation panel. |
+| `line` | Everything else, i.e. locked ranks. |
+
+`types:` repeats any of those keys (plus `format`) for one requirement, looked up by `name#sub`, then
+`name`, then the name with a trailing `h` stripped. `formats` sets how numbers are printed —
+`money`, `shortmoney`, `simple`, `percent`, `raw`, or `time` (minutes), `time-seconds`, `time-hours`,
+`time-ticks`, which render through `time-format`. Money requirements use `money` unless you say
+otherwise; everything else uses `formats.default`.
+
+The same tokens also work in the icon lore of the rankup screen (`rankup.requirement-money`,
+`requirement-simple`, `requirement-progress`, `requirement-met`, `requirement-unmet`).
+
+> These keys are new. A locale file written before them keeps the built-in defaults, so add the
+> section (or delete your locale file and let it regenerate) to style the block.
+
+### Hand-written rank lore
+
+By default the menus generate a rank's lore from its requirements. Add a `lore` key to a rank in
+`rankups.yml` (or a prestige in `prestiges.yml`) to write it by hand instead:
+
+```yaml
+Aexample:
+  rank: 'A'
+  next: 'B'
+  requirements:
+    - 'money 5000'
+    - 'xp-level 10'
+  lore:
+    - '&e&lREQUIREMENTS'
+    - '{requirements}'
+    - ''
+    - '&7Unlocks the &f{{next.rank}} &7mine'
+    - '&eClick to rank up'
+```
+
+Declaring `lore` **replaces** the generated lore on that item — including the "Click to rankup"
+hint — so put `{requirements}` back wherever you want the costs to appear. Two tokens expand:
+
+| Token | Expands to |
+| --- | --- |
+| `{requirements}` | The generated requirement lines (`• Money: 5,000 (100%)`), styled by [`menu.requirements`](#requirement-lines). Must be alone on its line. |
+| `{rewards}` | The rank's rewards block, i.e. `rankup.rewards` or the locale `rewards-default`. Confirmation panel only. |
+
+Everything else goes through the normal text pipeline, so `&` codes, `&#RRGGBB`, MiniMessage,
+`{{rank.rank}}`, `{{next.rank}}` and PlaceholderAPI all work, and a lore key can be a single string
+with `\n` instead of a list.
+
+An empty entry (`- ''`) is kept as a blank spacer line, including as the first and last entry, so you
+can pad the tooltip above and below.
+
+`lore` applies to every screen the rank appears on. Four optional keys override it on one screen
+each, falling back to `lore` when absent:
+
+| Key | Screen |
+| --- | --- |
+| `lore-current` | The rank the player is standing on, in the rank path / prestige list. |
+| `lore-locked` | A rank they have not reached yet. |
+| `lore-complete` | A rank they have already passed. |
+| `lore-info` | The info panel at slot 13 of the rankup / prestige confirmation screen. |
+
+Ranks with no `lore` key keep the generated lore, so this is opt-in per rank.
 
 ---
 

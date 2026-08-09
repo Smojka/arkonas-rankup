@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import com.arkonas.ranks.menu.AbstractMenu;
 import com.arkonas.ranks.menu.MenuModule;
+import com.arkonas.ranks.menu.RankLore;
 import com.arkonas.ranks.prestige.Prestige;
 import com.arkonas.ranks.ranks.RankElement;
 
@@ -58,26 +59,44 @@ public class PrestigeListMenu extends LadderMenu<Prestige> {
       case CURRENT: {
         Component name = text.component(player,
             text.raw("prestige-list.current", "&d{{next.rank}}"), prestige, next);
-        List<Component> lore = new ArrayList<>();
-        lore.add(text.component(player, text.raw("prestige-list.click", "&eClick to prestige")));
+        List<Component> lore = manualLore(prestige, next, RankLore.CURRENT, true);
+        if (lore == null) {
+          lore = new ArrayList<>();
+          lore.add(text.component(player, text.raw("prestige-list.click", "&eClick to prestige")));
+        }
         return head(player.getUniqueId(), player.getName(), name, lore, true);
       }
       case COMPLETE: {
         Component name = text.component(player,
             text.raw("prestige-list.complete", "&a{{rank.rank}} &7(done)"), prestige, next);
-        return icon(Material.LIME_STAINED_GLASS_PANE, name, List.of(), true);
+        List<Component> lore = manualLore(prestige, next, RankLore.COMPLETE, false);
+        return icon(Material.LIME_STAINED_GLASS_PANE, name, lore == null ? List.of() : lore, true);
       }
       default: {
         Component name = text.component(player,
             text.raw("prestige-list.locked", "&c{{next.rank}}"), prestige, next);
-        return icon(Material.RED_STAINED_GLASS_PANE, name, List.of(), false);
+        List<Component> lore = manualLore(prestige, next, RankLore.LOCKED, false);
+        return icon(Material.RED_STAINED_GLASS_PANE, name, lore == null ? List.of() : lore, false);
       }
     }
+  }
+
+  /** The prestige's hand-written {@code lore:} from prestiges.yml, or null when it has none. */
+  private List<Component> manualLore(Prestige prestige, Prestige next, String variant,
+      boolean showProgress) {
+    RankLore lore = module.getRankLore();
+    return lore.render(player, prestige, next, variant,
+        () -> lore.requirementLines(player, prestige, next, showProgress),
+        lore.rewards(prestige, "prestige"));
   }
 
   @Override
   protected void onEntryClick(RankElement<Prestige> element, EntryState state) {
     if (state == EntryState.CURRENT) {
+      // the list is reachable with only rankup.prestiges; prestiging still needs rankup.prestige
+      if (module.denied(player, com.arkonas.ranks.menu.MenuModule.PERM_PRESTIGE)) {
+        return;
+      }
       theme.playSound(player, "click");
       defer(() -> new PrestigeMenu(module, player, this).open());
     }

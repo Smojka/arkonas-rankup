@@ -136,6 +136,43 @@ menu:
       leaderboard:
         name: "&6&lLider Tablosu"
         lore: "&7En çok rütbe & prestij"
+  # Üretilen gereksinim bloğu: rütbe yolu, prestij listesi ve elle yazılmış rütbe
+  # lore'undaki {requirements} etiketi bu şablonları basar.
+  #
+  # Etiketler: {name} {current} {required} {remaining} {percent} {bar} {status}
+  #            {color} {type} {sub} {raw}
+  # Her şablon tek satır ya da satır listesi olabilir; & kodları, &#RRGGBB,
+  # MiniMessage, {{rank.rank}}, {{ value | money }} ve PlaceholderAPI da çalışır.
+  requirements:
+    # rütbenin gereksinimi varsa bloğun üstüne/altına basılan satırlar
+    header: []
+    footer: []
+    hide-met: false
+    sort: config              # config | unmet-first | met-first
+    # kilitli rütbeler, yani oyuncunun henüz uğraşmadığı rütbeler
+    line: "&7• &f{name}: &b{required}"
+    # oyuncunun üzerinde olduğu rütbe ve onay ekranı
+    line-progress: "&7• &f{name}: &b{required} &7(%{percent})"
+    # line-met / line-unmet duruma göre ikisini de ezer:
+    # line-unmet: "&7• &f{name}: &c{current}&7/&f{required} &7(%{percent})"
+    # line-met: "&7• &f{name}: &a{required} &7(tamam)"
+    # sayılacak bir şeyi olmayan gereksinimler: permission, world, group, advancement...
+    line-flat: "&7• &f{name}: {status}"
+    status-met: "&a✔"
+    status-unmet: "&c✖"
+    time-format: "{days} gün, {hours} saat, {minutes} dakika"
+    formats:
+      # money | shortmoney | simple | percent | raw
+      # time (dakika) | time-seconds | time-hours | time-ticks
+      default: simple
+    # gereksinim başına ezme; her biri kendi format'ını ve yukarıdaki satırları alabilir
+    types: {}
+      # playtime-minutes:
+      #   format: time
+      #   line-progress:
+      #     - "&7• &f{name}"
+      #     - "  &8mevcut: &b{current}"
+      #     - "  &8gerekli: &f{required} &7(%{percent})"
   path:
     title: "Rütbe Yolu"
     current: "&d{{rank.rank}} &7» &f{{next.rank}}"

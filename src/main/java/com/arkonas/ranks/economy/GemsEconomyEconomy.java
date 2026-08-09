@@ -54,11 +54,13 @@ final class GemsEconomyEconomy implements Economy {
   }
 
   @Override
-  public void withdrawPlayer(Player player, double amount) {
+  public boolean withdrawPlayer(Player player, double amount) {
     try {
-      withdraw.invoke(api, player.getUniqueId(), amount);
-    } catch (Throwable ignored) {
-      // best effort
+      Object result = withdraw.invoke(api, player.getUniqueId(), amount);
+      return !(result instanceof Boolean) || (Boolean) result;
+    } catch (Throwable t) {
+      // nothing was withdrawn, so the caller must not grant the rank
+      return false;
     }
   }
 

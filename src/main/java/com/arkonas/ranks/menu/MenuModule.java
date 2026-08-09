@@ -38,6 +38,10 @@ public class MenuModule {
   private RequirementIcons icons;
   @Getter
   private RequirementItemRenderer requirementRenderer;
+  @Getter
+  private RankLore rankLore;
+  @Getter
+  private RequirementLore requirementLore;
   private MenuTicker ticker;
 
   private final Set<AbstractMenu> openMenus = new LinkedHashSet<>();
@@ -53,6 +57,8 @@ public class MenuModule {
     this.text = new MenuText(plugin, theme);
     this.icons = new RequirementIcons(config.requirementIcons());
     this.requirementRenderer = new RequirementItemRenderer(this);
+    this.requirementLore = new RequirementLore(this);
+    this.rankLore = new RankLore(this);
     this.ticker = new MenuTicker(plugin, this, config.animationPeriod());
   }
 
@@ -112,6 +118,38 @@ public class MenuModule {
     return config.openRevealSpeed();
   }
 
+  // --- permissions ----------------------------------------------------------
+
+  // The menus stand in for the chat commands, so they must be gated by the SAME permission nodes.
+  // Without this a player who only holds rankup.ranks can reach /ranks -> path -> hub -> Rankup ->
+  // Confirm and rank up (or prestige) with the matching command permission revoked.
+  public static final String PERM_RANKUP = "rankup.rankup";
+  public static final String PERM_RANKS = "rankup.ranks";
+  public static final String PERM_PRESTIGE = "rankup.prestige";
+  public static final String PERM_PRESTIGES = "rankup.prestiges";
+  public static final String PERM_TOP = "rankup.top";
+
+  /**
+   * Whether the player may use the screen behind {@code permission}. Every {@code open*} factory and
+   * every confirm action checks this, so a permission revoked while a menu is open still blocks the
+   * action.
+   */
+  public boolean allowed(Player player, String permission) {
+    return player != null && player.hasPermission(permission);
+  }
+
+  /** Checks a permission and tells the player when they lack it; true when the click is blocked. */
+  public boolean denied(Player player, String permission) {
+    if (allowed(player, permission)) {
+      return false;
+    }
+    if (player != null) {
+      player.sendMessage(org.bukkit.ChatColor.RED
+          + "You do not have permission to do that.");
+    }
+    return true;
+  }
+
   // --- factories ------------------------------------------------------------
 
   public void openHub(Player player) {
@@ -119,10 +157,16 @@ public class MenuModule {
   }
 
   public void openRankup(Player player) {
+    if (denied(player, PERM_RANKUP)) {
+      return;
+    }
     new RankupMenu(this, player, null).open();
   }
 
   public void openRankPath(Player player) {
+    if (denied(player, PERM_RANKS)) {
+      return;
+    }
     // multi-ladder servers get a ladder picker; single-ladder servers go straight to the path
     if (plugin.getLadders() != null && plugin.getLadders().hasMultiple()) {
       new LadderPickerMenu(this, player, null).open();
@@ -132,18 +176,30 @@ public class MenuModule {
   }
 
   public void openLadderPicker(Player player) {
+    if (denied(player, PERM_RANKS)) {
+      return;
+    }
     new LadderPickerMenu(this, player, null).open();
   }
 
   public void openPrestige(Player player) {
+    if (denied(player, PERM_PRESTIGE)) {
+      return;
+    }
     new PrestigeMenu(this, player, null).open();
   }
 
   public void openPrestigeList(Player player) {
+    if (denied(player, PERM_PRESTIGES)) {
+      return;
+    }
     new PrestigeListMenu(this, player, null).open();
   }
 
   public void openLeaderboard(Player player, boolean prestiges) {
+    if (denied(player, PERM_TOP)) {
+      return;
+    }
     new LeaderboardMenu(this, player, null, prestiges).open();
   }
 

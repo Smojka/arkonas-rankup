@@ -50,7 +50,7 @@ public final class CitizensHook {
             return;
           }
           if (getClicker.invoke(event) instanceof Player player) {
-            run(player, commands);
+            run(plugin, player, commands);
           }
         } catch (Throwable ignored) {
           // never let an NPC interaction disrupt the server
@@ -77,14 +77,14 @@ public final class CitizensHook {
     return null;
   }
 
-  private static void run(Player player, List<String> commands) {
+  private static void run(ArkonasRanksPlugin plugin, Player player, List<String> commands) {
     for (String line : commands) {
       NpcCommand.Dispatch dispatch = NpcCommand.parse(line, player.getName());
       if (dispatch.command().isBlank()) {
         continue;
       }
       if (dispatch.console()) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), dispatch.command());
+        com.arkonas.ranks.util.ConsoleCommand.dispatch(plugin.getLogger(), dispatch.command());
       } else {
         player.performCommand(dispatch.command());
       }

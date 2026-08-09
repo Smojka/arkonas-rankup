@@ -71,6 +71,11 @@ public class RankupMenu extends ConfirmScreen {
 
   @Override
   protected void performConfirm() {
+    // re-checked at the moment of the action, not just when the screen opened: the menu can outlive
+    // a permission change, and this screen is reachable from /ranks without rankup.rankup
+    if (module.denied(player, com.arkonas.ranks.menu.MenuModule.PERM_RANKUP)) {
+      return;
+    }
     plugin.getHelper().rankup(player, ladder);
   }
 }

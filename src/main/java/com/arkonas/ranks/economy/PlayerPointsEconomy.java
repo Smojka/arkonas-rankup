@@ -54,11 +54,14 @@ final class PlayerPointsEconomy implements Economy {
   }
 
   @Override
-  public void withdrawPlayer(Player player, double amount) {
+  public boolean withdrawPlayer(Player player, double amount) {
     try {
-      take.invoke(api, player.getUniqueId(), (int) Math.ceil(amount));
-    } catch (Throwable ignored) {
-      // best effort; a failed take leaves the balance unchanged
+      Object result = take.invoke(api, player.getUniqueId(), (int) Math.ceil(amount));
+      // the API returns a boolean; treat anything else as success only if the call did not throw
+      return !(result instanceof Boolean) || (Boolean) result;
+    } catch (Throwable t) {
+      // a failed take leaves the balance unchanged, so the caller must not grant the rank
+      return false;
     }
   }
 
