@@ -91,6 +91,9 @@ shadowJar {
 processResources {
     inputs.property 'version', project.version
     duplicatesStrategy = 'include'
+    // expand() filters through the JVM default charset unless told otherwise, which would mangle
+    // the non-ASCII command aliases in plugin.yml when building on a non-UTF-8 default (JDK < 18).
+    filteringCharset = 'UTF-8'
 
     from(sourceSets.main.resources.srcDirs) {
         include 'plugin.yml'

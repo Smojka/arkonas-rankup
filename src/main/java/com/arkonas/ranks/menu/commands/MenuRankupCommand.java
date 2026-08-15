@@ -25,6 +25,12 @@ public class MenuRankupCommand implements CommandExecutor {
 
   @Override
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    // the admin reload sub-command is never a menu screen; the chat executor owns it (and it must
+    // run before plugin.error(), so it stays usable when the config failed to load)
+    if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
+      return chat.onCommand(sender, command, label, args);
+    }
+
     // console keeps the exact chat behaviour (chat output, forced rankups)
     if (!(sender instanceof Player)) {
       return chat.onCommand(sender, command, label, args);

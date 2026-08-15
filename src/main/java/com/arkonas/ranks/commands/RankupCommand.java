@@ -27,6 +27,13 @@ public class RankupCommand implements CommandExecutor {
 
   @Override
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    // handled before the error check so a config that failed to load can still be fixed and
+    // reloaded in place, exactly like /aru reload does.
+    if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
+      handleReload(sender);
+      return true;
+    }
+
     if (plugin.error(sender)) {
       return true;
     }
@@ -100,6 +107,23 @@ public class RankupCommand implements CommandExecutor {
         throw new IllegalArgumentException("Invalid confirmation type " + confirmationType);
     }
     return true;
+  }
+
+  /**
+   * Re-reads every configuration file (config.yml, the locale, rankups.yml, prestiges.yml,
+   * ladders/, effects.yml and menus.yml) into memory. Same entry point as {@code /aru reload}.
+   */
+  private void handleReload(CommandSender sender) {
+    if (!sender.hasPermission("rankup.reload")) {
+      sender.sendMessage(ChatColor.RED + "You do not have permission to reload ArkonasRanks.");
+      return;
+    }
+
+    plugin.reload(false);
+    if (!plugin.error(sender)) {
+      sender.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "ArkonasRanks "
+          + ChatColor.YELLOW + "Reloaded configuration files.");
+    }
   }
 
   private void handleTop(CommandSender sender, String[] args) {

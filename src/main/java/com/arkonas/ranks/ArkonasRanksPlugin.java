@@ -256,7 +256,8 @@ public class ArkonasRanksPlugin extends JavaPlugin {
         ? new com.arkonas.ranks.menu.commands.MenuRankupCommand(this, menuModule, rankupChat)
         : rankupChat);
     getCommand("rankup").setTabCompleter(
-        new com.arkonas.ranks.commands.LadderTabCompleter(this, "noconfirm", "top", "gui"));
+        new com.arkonas.ranks.commands.LadderTabCompleter(this, "noconfirm", "top", "gui")
+            .gated("reload", "rankup.reload"));
     getCommand("arkonasranks").setExecutor(new InfoCommand(this, notifier));
     effectsListener = new com.arkonas.ranks.effects.EffectsListener(this);
     getServer().getPluginManager().registerEvents(effectsListener, this);

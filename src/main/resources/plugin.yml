@@ -10,7 +10,10 @@ api-version: '1.21'
 commands:
   rankup:
     permission: rankup.rankup
-    description: Rankup.
+    description: Rankup. /rankup reload re-reads every configuration file (rankup.reload).
+    # rutbe is an ASCII fallback: the vanilla client cannot tab-complete a command
+    # label containing a non-ASCII character, so /rütbe has to be typed in full.
+    aliases: [rank, rütbe, rutbe]
   arkonasranks:
     description: View ArkonasRanks version and perform some administrative commands.
     aliases: [aru]

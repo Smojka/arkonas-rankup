@@ -1,8 +1,10 @@
 package com.arkonas.ranks.commands;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
@@ -19,10 +21,20 @@ public class LadderTabCompleter implements TabCompleter {
 
   private final ArkonasRanksPlugin plugin;
   private final String[] extraFirstArgs;
+  private final Map<String, String> gatedFirstArgs = new LinkedHashMap<>();
 
   public LadderTabCompleter(ArkonasRanksPlugin plugin, String... extraFirstArgs) {
     this.plugin = plugin;
     this.extraFirstArgs = extraFirstArgs;
+  }
+
+  /**
+   * Adds a first argument that is only suggested to senders holding {@code permission}, so admin
+   * sub-commands stay out of the completions every player sees.
+   */
+  public LadderTabCompleter gated(String arg, String permission) {
+    gatedFirstArgs.put(arg, permission);
+    return this;
   }
 
   @Nullable
@@ -37,6 +49,12 @@ public class LadderTabCompleter implements TabCompleter {
     for (String extra : extraFirstArgs) {
       if (extra.toLowerCase(Locale.ROOT).startsWith(prefix)) {
         out.add(extra);
+      }
+    }
+    for (Map.Entry<String, String> gated : gatedFirstArgs.entrySet()) {
+      if (gated.getKey().toLowerCase(Locale.ROOT).startsWith(prefix)
+          && sender.hasPermission(gated.getValue())) {
+        out.add(gated.getKey());
       }
     }
     LadderRegistry ladders = plugin.getLadders();
