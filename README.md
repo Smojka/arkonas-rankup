@@ -535,8 +535,12 @@ confirmation screen, so `ranks-gui` and `confirmation-type` are ignored while it
 Confirming in a menu routes back through the same rankup code as `/rankup`, so requirements and
 cooldowns are re-checked and the menu is not a way around them.
 
-- Rankup and Prestige: one icon per requirement, each with a progress bar, a cost and a ✔ or ✖. A
-  pulsing Confirm button appears once everything is met, or a live countdown while on cooldown.
+- Rankup and Prestige: the rank-info panel on top, one icon per requirement below it — each with a
+  progress bar, a cost and a ✔ or ✖ — and a single action button under those. The grid is the same
+  in every state, mirrored around the centre column, so nothing moves as your progress changes.
+  Only the button differs: it is red and lists what you are still missing, a live countdown while
+  on cooldown, and a pulsing green **Rank Up** once everything is met. Clicking it while it is red
+  is refused with the deny sound; the way out of the screen is the nav bar's Back / Close.
 - Rank path: the ladder as a paginated map. Completed ranks are green, your own head sits on the
   current one (click it to open the rankup screen), and locked ranks are red with their costs.
 - Ladder picker: only appears when you run more than one ladder.
@@ -596,11 +600,19 @@ theme:
 menus:
   hub: { rows: 5, head-slot: 13, path-slot: 20, rankup-slot: 22, prestige-slot: 24, leaderboard-slot: 40 }
   path: { rows: 6 }
-  rankup: { rows: 5, info-material: WRITABLE_BOOK }
-  prestige: { rows: 5, info-material: WRITABLE_BOOK }
+  rankup: { rows: 5, info-material: WRITABLE_BOOK, locked-material: RED_CONCRETE }
+  prestige: { rows: 5, info-material: WRITABLE_BOOK, locked-material: RED_CONCRETE }
   prestige-list: { rows: 6 }
   leaderboard: { rows: 6 }
 ```
+
+`rankup` and `prestige` also take an `action-slot`. Left unset it follows `rows`: the centre of the
+row under the requirement icons, slot 31 on a five-row menu and 40 on a six-row one. `rows` itself
+is clamped to 4-6 on those two screens, which is what the layout needs.
+
+The requirement icons are mirrored around the centre column of their row: an odd number of them
+sits on the centre, an even number splits into two equal halves around it. More than seven spill
+onto the rows above and below, each row centred the same way.
 
 One shared ticker animates every open menu. It starts when the first menu opens and cancels itself
 when the last one closes, so an idle server does no work for it.

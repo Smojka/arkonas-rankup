@@ -165,4 +165,12 @@ public class RankLore {
       boolean showProgress) {
     return module.getRequirementLore().render(player, rank, next, showProgress);
   }
+
+  /**
+   * The requirement block reduced to what the player has <em>not</em> finished yet, for the
+   * locked action button on the confirmation screen.
+   */
+  public List<Component> unmetRequirementLines(Player player, Rank rank, Rank next) {
+    return module.getRequirementLore().render(player, rank, next, true, true);
+  }
 }

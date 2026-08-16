@@ -18,7 +18,7 @@ public class CancelNavigationTest extends RankupTest {
   }
 
   @Test
-  public void pathToRankupAndCancelReturnsToPath() {
+  public void pathToRankupAndBackReturnsToPath() {
     PlayerMock player = server.addPlayer();
     // the path opens with rankup.ranks; clicking the current rank also needs rankup.rankup
     player.addAttachment(plugin, "rankup.ranks", true);
@@ -39,11 +39,11 @@ public class CancelNavigationTest extends RankupTest {
     RankupMenu rankup = (RankupMenu) holder;
     assertEquals(ConfirmScreen.State.READY, rankup.getState());
 
-    // cancel -> back to the path menu
-    player.simulateInventoryClick(rankup.getCancelSlot());
+    // back -> the path menu (the screen's own cancel button is gone; the nav bar is the way out)
+    player.simulateInventoryClick(rankup.getBackSlot());
     server.getScheduler().performTicks(1);
 
     assertTrue(player.getOpenInventory().getTopInventory().getHolder() instanceof RankPathMenu,
-        "cancel should return to the rank path menu");
+        "back should return to the rank path menu");
   }
 }

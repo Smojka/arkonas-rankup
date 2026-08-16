@@ -77,11 +77,22 @@ public class RequirementLore {
    *     actually working on this rank) instead of the plain {@code line} ones
    */
   public List<Component> render(Player player, Rank rank, Rank next, boolean showProgress) {
+    return render(player, rank, next, showProgress, false);
+  }
+
+  /**
+   * The requirement block for a rank.
+   *
+   * @param unmetOnly drop the requirements the player already meets, whatever {@code hide-met}
+   *     says — the locked action button of the confirmation screen exists to name what is missing
+   */
+  public List<Component> render(Player player, Rank rank, Rank next, boolean showProgress,
+      boolean unmetOnly) {
     List<Component> lore = new ArrayList<>();
     if (rank == null) {
       return lore;
     }
-    List<Requirement> requirements = order(player, rank);
+    List<Requirement> requirements = order(player, rank, unmetOnly);
     if (requirements.isEmpty()) {
       return lore;
     }
@@ -215,9 +226,9 @@ public class RequirementLore {
   // --- ordering -------------------------------------------------------------
 
   /** The requirements to print: {@code hide-met} drops the finished ones, {@code sort} reorders. */
-  private List<Requirement> order(Player player, Rank rank) {
+  private List<Requirement> order(Player player, Rank rank, boolean unmetOnly) {
     ConfigurationSection root = root();
-    boolean hideMet = root != null && root.getBoolean("hide-met", false);
+    boolean hideMet = unmetOnly || (root != null && root.getBoolean("hide-met", false));
     String sort = root == null ? "config" : root.getString("sort", "config");
 
     List<Requirement> list = new ArrayList<>();

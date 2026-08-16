@@ -30,7 +30,33 @@ public class TurkishLocaleTest extends RankupTest {
 
     ItemStack confirm = menu.getInventory().getItem(menu.getConfirmSlot());
     String name = PlainTextComponentSerializer.plainText().serialize(confirm.displayName());
-    assertTrue(name.contains("Onayla"), "expected Turkish confirm label, got: " + name);
+    assertTrue(name.contains("RÜTBE ATLA"), "expected Turkish confirm label, got: " + name);
+  }
+
+  @Test
+  public void testTurkishLockedButton() {
+    PlayerMock player = server.addPlayer();
+    player.addAttachment(plugin, "rankup.rankup", true);
+    plugin.getEconomy().setPlayer(player, 0);
+    groupProvider.transferGroup(player.getUniqueId(), null, "A");
+
+    plugin.getMenuModule().openRankup(player);
+    RankupMenu menu = (RankupMenu) player.getOpenInventory().getTopInventory().getHolder();
+    assertEquals(ConfirmScreen.State.UNMET, menu.getState());
+
+    ItemStack locked = menu.getInventory().getItem(menu.getActionSlot());
+    String name = PlainTextComponentSerializer.plainText().serialize(locked.displayName());
+    assertTrue(name.contains("ŞARTLARI SAĞLAMIYORSUN"),
+        "expected the Turkish locked label, got: " + name);
+
+    StringBuilder lore = new StringBuilder();
+    for (net.kyori.adventure.text.Component line : locked.getItemMeta().lore()) {
+      lore.append(PlainTextComponentSerializer.plainText().serialize(line)).append('\n');
+    }
+    assertTrue(lore.toString().contains("Şu şartlar eksik"),
+        "expected the Turkish locked lore, got: " + lore);
+    assertTrue(lore.toString().contains("Para"),
+        "the locked lore should name the missing requirement in Turkish, got: " + lore);
   }
 
   @Test

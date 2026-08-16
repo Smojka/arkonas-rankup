@@ -42,8 +42,11 @@ public abstract class AbstractMenu implements InventoryHolder {
   private long openedFrame;
 
   private int[] ringSlots = new int[0];
+  @Getter
   private int backSlot = -1;
+  @Getter
   private int homeSlot = -1;
+  @Getter
   private int closeSlot = -1;
 
   // open-reveal transition state

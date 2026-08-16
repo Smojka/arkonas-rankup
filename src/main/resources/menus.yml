@@ -109,14 +109,26 @@ menus:
     leaderboard-slot: 40
   path:
     rows: 6
+  # The rankup/prestige screen draws the same grid in every state: the info panel
+  # on top, the requirement icons mirrored around the centre column of the middle
+  # row, and one action button under them. The button ranks the player up when
+  # they qualify, and otherwise lists what they are still missing in its lore
+  # (menu.rankup.locked / locked-lore in the locale file).
   rankup:
     rows: 5
     # material of the rank-info panel shown at slot 13 (name + rewards)
     info-material: WRITABLE_BOOK
+    # material of the action button while the requirements are not met
+    locked-material: RED_CONCRETE
+    # where the action button sits. Left unset it follows `rows`: the centre of
+    # the row under the requirement icons (slot 31 on a 5-row menu, 40 on six).
+    # action-slot: 31
   prestige:
     rows: 5
     # material of the rank-info panel shown at slot 13 (name + rewards)
     info-material: WRITABLE_BOOK
+    locked-material: RED_CONCRETE
+    # action-slot: 31
   prestige-list:
     rows: 6
   leaderboard:

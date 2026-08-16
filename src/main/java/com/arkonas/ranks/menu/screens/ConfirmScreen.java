@@ -1,6 +1,7 @@
 package com.arkonas.ranks.menu.screens;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
@@ -18,23 +19,41 @@ import com.arkonas.ranks.requirements.Requirement;
 
 /**
  * Shared base for the rankup and prestige confirmation screens (no fork). Drives
- * the three visible states — UNMET (requirement icons), COOLDOWN (live
- * countdown) and READY (pulsing confirm + cancel) — plus a BLOCKED barrier when
- * there is nothing to advance to. Subclasses supply the ladder facts and the
- * confirm action; the confirm click re-routes through the helper so the exact
- * re-check contract of {@code GuiListener} is preserved.
+ * the three visible states — UNMET (locked button), COOLDOWN (live countdown)
+ * and READY (pulsing confirm) — plus a BLOCKED barrier when there is nothing to
+ * advance to. Subclasses supply the ladder facts and the confirm action; the
+ * confirm click re-routes through the helper so the exact re-check contract of
+ * {@code GuiListener} is preserved.
+ *
+ * <p>Every reachable state draws the <em>same</em> grid — info panel on top, the
+ * requirement icons mirrored around the centre column, one action button below
+ * them — so nothing jumps around as the player's progress changes. Only the
+ * action button differs: locked (with the missing requirements in its lore),
+ * counting down, or the green confirm.
  */
 public abstract class ConfirmScreen extends AbstractMenu {
 
   public enum State { BLOCKED, UNMET, COOLDOWN, READY }
 
+  /** The rank-info panel: top interior row, centre column. */
+  private static final int INFO_SLOT = 13;
+  /** Expanded to the requirements the player is still missing, inside the locked lore. */
+  private static final String REQUIREMENTS_TOKEN = "{requirements}";
+  private static final String DEFAULT_LOCKED_LORE =
+      "&7You are still missing:\n" + REQUIREMENTS_TOKEN
+          + "\n&r\n&8Finish these and this button turns green.";
+
   @Getter
   private State state = State.BLOCKED;
+  /**
+   * The single action button, at the same slot in UNMET, COOLDOWN and READY (-1 only while
+   * BLOCKED). Clicking it ranks the player up when they qualify and is refused otherwise.
+   */
+  @Getter
+  private int actionSlot = -1;
+  /** The action slot while it actually confirms, i.e. only in the READY state. */
   @Getter
   private int confirmSlot = -1;
-  @Getter
-  private int cancelSlot = -1;
-  private int cooldownSlot = -1;
 
   private ItemStack confirmBase;
   private ItemStack confirmGlow;
@@ -44,7 +63,7 @@ public abstract class ConfirmScreen extends AbstractMenu {
   @Getter
   private long shownCooldownSeconds = -1;
 
-  // pre-built fill-reveal variants for the UNMET state (no Pebble in the tick)
+  // pre-built fill-reveal variants for the requirement icons (no Pebble in the tick)
   private final List<FillEntry> fillEntries = new ArrayList<>();
 
   private static final class FillEntry {
@@ -61,7 +80,9 @@ public abstract class ConfirmScreen extends AbstractMenu {
   }
 
   protected ConfirmScreen(MenuModule module, Player player, AbstractMenu parent, int rows) {
-    super(module, player, parent, rows);
+    // the layout needs a top row for the panel, a requirement row and a row for the action
+    // button, so a misconfigured `rows:` is clamped rather than left to collapse into itself
+    super(module, player, parent, Math.min(6, Math.max(4, rows)));
   }
 
   // --- subclass contract ----------------------------------------------------
@@ -94,21 +115,29 @@ public abstract class ConfirmScreen extends AbstractMenu {
     lastPulsePhase = -1;
     shownCooldownSeconds = -1;
     confirmed = false;
+    confirmSlot = -1;
+    actionSlot = -1;
+    fillEntries.clear();
 
     if (current == null || next == null || !canAdvance()) {
       state = State.BLOCKED;
       placeBlocked();
-    } else if (!requirementsMet()) {
-      state = State.UNMET;
-      placeRequirements();
     } else {
-      long cooldown = plugin.getHelper().getCooldownRemainingMillis(player.getUniqueId());
-      if (cooldown > 0) {
-        state = State.COOLDOWN;
-        placeCooldown(cooldown);
+      actionSlot = resolveActionSlot();
+      setItem(INFO_SLOT, infoPanel());
+      placeRequirements();
+      if (!requirementsMet()) {
+        state = State.UNMET;
+        placeLocked(current, next);
       } else {
-        state = State.READY;
-        placeConfirm();
+        long cooldown = plugin.getHelper().getCooldownRemainingMillis(player.getUniqueId());
+        if (cooldown > 0) {
+          state = State.COOLDOWN;
+          placeCooldown(cooldown);
+        } else {
+          state = State.READY;
+          placeConfirm(current, next);
+        }
       }
     }
 
@@ -123,8 +152,6 @@ public abstract class ConfirmScreen extends AbstractMenu {
   }
 
   private void placeRequirements() {
-    setItem(13, infoPanel());
-    fillEntries.clear();
     List<Requirement> list = new ArrayList<>();
     for (Requirement requirement : requirements()) {
       list.add(requirement);
@@ -150,36 +177,56 @@ public abstract class ConfirmScreen extends AbstractMenu {
     }
   }
 
-  private void placeConfirm() {
-    setItem(13, infoPanel());
+  /**
+   * The action button while the player does not qualify: it stays in place and in reach, but
+   * says in its own lore which requirements are still missing instead of firing.
+   */
+  private void placeLocked(Rank current, Rank next) {
+    Material material =
+        module.getConfig().material(menuKey(), "locked-material", Material.RED_CONCRETE);
+    Component name = text.component(player,
+        text.raw(menuKey() + ".locked", "&c&lRequirements not met"), current, next);
+    setItem(actionSlot, icon(material, name, lockedLore(current, next), false));
+  }
 
-    confirmBase = icon(Material.LIME_CONCRETE,
-        text.component(player, text.raw(menuKey() + ".confirm", "&a&lConfirm"),
-            currentRank(), nextRank()),
-        text.lore(player, text.raw(menuKey() + ".confirm-lore", "&7Click to confirm"),
-            currentRank(), nextRank()),
-        false);
-    confirmGlow = icon(Material.EMERALD_BLOCK,
-        text.component(player, text.raw(menuKey() + ".confirm", "&a&lConfirm"),
-            currentRank(), nextRank()),
-        text.lore(player, text.raw(menuKey() + ".confirm-lore", "&7Click to confirm"),
-            currentRank(), nextRank()),
-        true);
+  /**
+   * The locked button's lore: the locale template, with {@code {requirements}} expanded to the
+   * requirement lines the player has not finished yet (the met ones are dropped whatever
+   * {@code menu.requirements.hide-met} says — this block exists to name what is missing).
+   */
+  private List<Component> lockedLore(Rank current, Rank next) {
+    String raw = text.raw(menuKey() + ".locked-lore", DEFAULT_LOCKED_LORE);
+    List<Component> lore = new ArrayList<>();
+    List<Component> unmet = null;
+    for (String line : raw.split("\n", -1)) {
+      if (line.trim().equals(REQUIREMENTS_TOKEN)) {
+        if (unmet == null) {
+          unmet = module.getRankLore().unmetRequirementLines(player, current, next);
+        }
+        lore.addAll(unmet);
+        continue;
+      }
+      lore.add(text.component(player, line, current, next));
+    }
+    return lore;
+  }
 
-    confirmSlot = 29;
-    cancelSlot = 33;
+  private void placeConfirm(Rank current, Rank next) {
+    String name = text.raw(menuKey() + ".confirm", "&a&lConfirm");
+    String lore = text.raw(menuKey() + ".confirm-lore", "&7Click to confirm");
+    confirmBase = icon(Material.LIME_CONCRETE, text.component(player, name, current, next),
+        text.lore(player, lore, current, next), false);
+    confirmGlow = icon(Material.EMERALD_BLOCK, text.component(player, name, current, next),
+        text.lore(player, lore, current, next), true);
+
+    confirmSlot = actionSlot;
     setItem(confirmSlot, confirmBase);
-    setItem(cancelSlot, icon(Material.RED_CONCRETE,
-        text.component(player, text.raw(menuKey() + ".cancel", "&c&lCancel")),
-        List.of(), false));
   }
 
   private void placeCooldown(long cooldownMillis) {
-    setItem(13, infoPanel());
-    cooldownSlot = centerSlot();
     long seconds = (long) Math.ceil(cooldownMillis / 1000.0);
     shownCooldownSeconds = seconds;
-    setItem(cooldownSlot, cooldownItem(seconds));
+    setItem(actionSlot, cooldownItem(seconds));
   }
 
   private ItemStack cooldownItem(long seconds) {
@@ -232,7 +279,7 @@ public abstract class ConfirmScreen extends AbstractMenu {
 
   @Override
   protected void onTick(long frame) {
-    if (state == State.UNMET && module.progressFill() && !fillEntries.isEmpty()) {
+    if (module.progressFill() && !fillEntries.isEmpty()) {
       // key off reveal completion so the fill animates from 0 after any open-reveal wipe
       long step = frame - getRevealDoneFrame();
       for (FillEntry entry : fillEntries) {
@@ -242,13 +289,14 @@ public abstract class ConfirmScreen extends AbstractMenu {
           entry.shown = k;
         }
       }
-    } else if (state == State.READY && module.confirmPulse() && confirmSlot >= 0) {
+    }
+    if (state == State.READY && module.confirmPulse() && confirmSlot >= 0) {
       int phase = (int) ((frame / 5) % 2);
       if (phase != lastPulsePhase) {
         setItem(confirmSlot, phase == 0 ? confirmBase : confirmGlow);
         lastPulsePhase = phase;
       }
-    } else if (state == State.COOLDOWN && module.cooldownCountdown() && cooldownSlot >= 0) {
+    } else if (state == State.COOLDOWN && module.cooldownCountdown() && actionSlot >= 0) {
       long cooldown = plugin.getHelper().getCooldownRemainingMillis(player.getUniqueId());
       if (cooldown <= 0) {
         refresh();
@@ -256,7 +304,7 @@ public abstract class ConfirmScreen extends AbstractMenu {
       }
       long seconds = (long) Math.ceil(cooldown / 1000.0);
       if (seconds != shownCooldownSeconds) {
-        setItem(cooldownSlot, cooldownItem(seconds));
+        setItem(actionSlot, cooldownItem(seconds));
         shownCooldownSeconds = seconds;
       }
     }
@@ -266,29 +314,27 @@ public abstract class ConfirmScreen extends AbstractMenu {
 
   @Override
   protected void handleClick(int slot, ClickType click) {
-    if (state == State.READY && slot == confirmSlot) {
-      // one confirm per screen: the action is deferred to the next tick, and a client can deliver
-      // several click packets within the same tick, so without this a click-spamming player queues
-      // several rankups off a single screen (each one charges them again)
-      if (confirmed) {
-        return;
-      }
-      confirmed = true;
-      theme.playSound(player, "click");
-      defer(() -> {
-        player.closeInventory();
-        performConfirm();
-      });
-    } else if (slot == cancelSlot) {
-      theme.playSound(player, "click");
-      defer(() -> {
-        if (getParent() != null) {
-          getParent().open();
-        } else {
-          player.closeInventory();
-        }
-      });
+    if (actionSlot < 0 || slot != actionSlot) {
+      return;
     }
+    if (state != State.READY) {
+      // the button is on screen in every state, so a click that cannot rank the player up has to
+      // answer for itself; the lore already says what is missing
+      theme.playSound(player, "deny");
+      return;
+    }
+    // one confirm per screen: the action is deferred to the next tick, and a client can deliver
+    // several click packets within the same tick, so without this a click-spamming player queues
+    // several rankups off a single screen (each one charges them again)
+    if (confirmed) {
+      return;
+    }
+    confirmed = true;
+    theme.playSound(player, "click");
+    defer(() -> {
+      player.closeInventory();
+      performConfirm();
+    });
   }
 
   // --- geometry -------------------------------------------------------------
@@ -298,31 +344,97 @@ public abstract class ConfirmScreen extends AbstractMenu {
     return (rows / 2) * 9 + 4;
   }
 
-  private List<Integer> requirementSlots(int count) {
+  /**
+   * Where the action button lives: the centre of the row under the requirement row, or the
+   * {@code action-slot} override from menus.yml. It is the same slot in every state so the
+   * button never moves out from under the cursor.
+   */
+  private int resolveActionSlot() {
     int rows = size() / 9;
     int midRow = rows / 2;
+    // a 4-row menu has no interior row below the middle one, so the button shares that row and
+    // the requirement icons mirror around it
+    int row = midRow + 1 <= rows - 2 ? midRow + 1 : midRow;
+    int def = row * 9 + 4;
+    int configured = module.getConfig().slot(menuKey(), "action-slot", def);
+    return configured >= 0 && configured < size() ? configured : def;
+  }
+
+  /**
+   * Mirror-symmetric slots for {@code count} requirement icons. Every row is centred on column 4
+   * and rows are used outward from the middle one, so the block always reads as balanced: an even
+   * number of icons straddles the centre column instead of leaning one slot to the left.
+   */
+  private List<Integer> requirementSlots(int count) {
     List<Integer> slots = new ArrayList<>();
-    if (count <= 7) {
-      int start = 1 + Math.max(0, (7 - count) / 2);
-      int c = start;
-      while (slots.size() < count) {
-        int slot = midRow * 9 + c;
-        if (slot != 13) { // reserved for the rank-info panel
-          slots.add(slot);
-        }
-        c++;
+    if (count <= 0) {
+      return slots;
+    }
+    List<int[]> shares = new ArrayList<>(); // {row, icons placed on it}
+    int remaining = count;
+    for (int row : interiorRowsFromMiddle(size() / 9)) {
+      if (remaining <= 0) {
+        break;
       }
-    } else {
-      for (int r = 1; r <= rows - 2 && slots.size() < count; r++) {
-        for (int c = 1; c <= 7 && slots.size() < count; c++) {
-          int slot = r * 9 + c;
-          if (slot == 13) {
-            continue; // reserved for the rank-info panel
-          }
-          slots.add(slot);
-        }
+      int take = Math.min(rowCapacity(row), remaining);
+      shares.add(new int[] {row, take});
+      remaining -= take;
+    }
+    shares.sort(Comparator.comparingInt(share -> share[0]));
+    for (int[] share : shares) {
+      for (int column : centredColumns(share[1], centreFree(share[0]))) {
+        slots.add(share[0] * 9 + column);
       }
     }
     return slots;
+  }
+
+  /** Interior rows (no border, no nav bar), ordered outward from the middle: 2, 1, 3 on 5 rows. */
+  private static List<Integer> interiorRowsFromMiddle(int rows) {
+    List<Integer> order = new ArrayList<>();
+    int mid = rows / 2;
+    order.add(mid);
+    for (int distance = 1; distance < rows; distance++) {
+      if (mid - distance >= 1) {
+        order.add(mid - distance);
+      }
+      if (mid + distance <= rows - 2) {
+        order.add(mid + distance);
+      }
+    }
+    return order;
+  }
+
+  /** How many icons one row can hold symmetrically: 7, or 6 when its centre slot is taken. */
+  private int rowCapacity(int row) {
+    return centreFree(row) ? 7 : 6;
+  }
+
+  /** Whether a row's centre column is free, i.e. holds neither the info panel nor the button. */
+  private boolean centreFree(int row) {
+    int centre = row * 9 + 4;
+    return centre != INFO_SLOT && centre != actionSlot;
+  }
+
+  /**
+   * {@code count} columns mirrored around column 4. An odd count sits on the centre column; an
+   * even one — and any count on a row whose centre is already taken — splits into two equal
+   * halves around it, which is what keeps the row symmetric.
+   */
+  private static int[] centredColumns(int count, boolean centreFree) {
+    int[] columns = new int[count];
+    boolean useCentre = centreFree && count % 2 == 1;
+    int side = useCentre ? (count - 1) / 2 : count / 2;
+    int i = 0;
+    for (int column = 4 - side; column < 4; column++) {
+      columns[i++] = column;
+    }
+    if (useCentre) {
+      columns[i++] = 4;
+    }
+    for (int column = 5; i < count; column++) {
+      columns[i++] = column;
+    }
+    return columns;
   }
 }

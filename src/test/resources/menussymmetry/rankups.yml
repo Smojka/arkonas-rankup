@@ -1,0 +1,17 @@
+# Four requirements: the even-count case, which used to be laid out one slot
+# left of centre. Used by RequirementSymmetryTest.
+Aexample:
+  rank: 'A'
+  next: 'B'
+  requirements:
+    - 'money 100'
+    - 'xp-level 5'
+    - 'permission rankup.symmetry.a'
+    - 'permission rankup.symmetry.b'
+Bexample:
+  rank: 'B'
+  next: 'C'
+  requirements:
+    - 'money 100'
+    - 'xp-level 5'
+    - 'permission rankup.symmetry.a'
