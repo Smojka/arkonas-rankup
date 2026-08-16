@@ -100,6 +100,7 @@ the config files without re-registering commands.
 | Command | Permission | Needs | What it does |
 | --- | --- | --- | --- |
 | `/rankup` | `rankup.rankup` | - | Rank up. Opens the rankup menu, or uses `confirmation-type` when menus are off. |
+| `/rank`, `/rütbe`, `/rutbe` | `rankup.rankup` | menus on | The same command under its aliases. Typed bare they open the hub menu instead of the rankup screen; with any argument they behave exactly like `/rankup`. |
 | `/rankup <ladder>` | `rankup.rankup` | a file in `ladders/` | Rank up on a named ladder. Skips the menu and the confirmation. |
 | `/rankup noconfirm [player]` | `rankup.noconfirm.other` for the `[player]` form | `enable-noconfirm` (default on) | Rank up with no confirmation. |
 | `/rankup top [prestige]` | `rankup.top` | `database.enabled` | Top-10 leaderboard. |

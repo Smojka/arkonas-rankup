@@ -15,6 +15,13 @@ import com.arkonas.ranks.ranks.RankElement;
  * screen; {@code /rankup top} opens the leaderboard. The console, the
  * {@code noconfirm} sub-command and the NOT_IN_LADDER case all fall through to
  * the wrapped chat executor so their behaviour is unchanged.
+ *
+ * <p>Typed bare under one of the command's aliases — {@code /rank}, {@code /rütbe},
+ * {@code /rutbe} — it opens the hub instead. Those labels are the noun, so they mean
+ * "show me my ranks"; the command's own name is the verb and goes straight to the
+ * rankup screen for a player who only wants to advance. Every sub-command
+ * ({@code reload}, {@code top}, {@code noconfirm}, a named ladder) behaves the same
+ * whichever label it was typed under.
  */
 @RequiredArgsConstructor
 public class MenuRankupCommand implements CommandExecutor {
@@ -47,6 +54,13 @@ public class MenuRankupCommand implements CommandExecutor {
       return true;
     }
 
+    // bare /rank, /rütbe, /rutbe -> the hub. This is deliberately keyed on "not the command's own
+    // name" rather than a copy of the alias list, so plugin.yml stays the one place they live.
+    if (args.length == 0 && isAlias(command, label)) {
+      menu.openHub(player);
+      return true;
+    }
+
     // a named extra ladder bypasses the menu and uses the chat ladder routing
     if (args.length > 0 && plugin.getLadders() != null
         && !args[0].equalsIgnoreCase(com.arkonas.ranks.ladder.LadderRegistry.DEFAULT)
@@ -72,5 +86,18 @@ public class MenuRankupCommand implements CommandExecutor {
 
     menu.openRankup(player);
     return true;
+  }
+
+  /**
+   * Whether the command was typed under one of its aliases rather than its own name. The label
+   * carries a {@code plugin:} prefix when the namespaced form was used, so only the part after
+   * the last colon is compared.
+   */
+  private static boolean isAlias(Command command, String label) {
+    if (label == null) {
+      return false;
+    }
+    String typed = label.substring(label.lastIndexOf(':') + 1);
+    return !typed.equalsIgnoreCase(command.getName());
   }
 }

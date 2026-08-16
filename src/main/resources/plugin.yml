@@ -11,6 +11,8 @@ commands:
   rankup:
     permission: rankup.rankup
     description: Rankup. /rankup reload re-reads every configuration file (rankup.reload).
+    # Typed bare, an alias opens the hub menu rather than the rankup screen: they read as
+    # the noun ("my ranks"), while /rankup is the verb and advances straight away.
     # rutbe is an ASCII fallback: the vanilla client cannot tab-complete a command
     # label containing a non-ASCII character, so /rütbe has to be typed in full.
     aliases: [rank, rütbe, rutbe]
